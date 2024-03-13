@@ -1,0 +1,42 @@
+{
+	"hosting": {
+		"site": "itstambayan",
+		"public": "public",
+		"ignore": [
+			"public/.htaccess",
+			"firebase.json",
+			"**/.*",
+			"**/node_modules/**"
+		],
+		"rewrites": [ {
+			"source": "/",
+			"destination": "/index.html"
+		},
+			{
+				"source": "/auth/login",
+				"destination": "/index.html"
+			},
+			{
+				"source": "/auth/signup",
+				"destination": "/index.html"
+			},
+			{
+				"source": "/auth",
+				"destination": "/index.html"
+			},
+			{
+				"source": "/user/**",
+				"destination": "/index.html"
+			}],
+		"headers": [ {
+			"source": "**/*.@(eot|otf|ttf|ttc|woff|font.css)",
+			"headers": [ {
+				"key": "Access-Control-Allow-Origin",
+				"value": "*"
+			}]
+		}]
+	},
+	"database": {
+		"rules": "database.rules.json"
+	}
+}

@@ -1,0 +1,42 @@
+{
+	"rules": {
+		".read": false,
+		".write": false,
+		"users": {
+			".indexOn": "creationTimestamp",
+			".read": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
+			".write": "auth != null && auth.provider !== 'Anonymous'",
+			"chats": {
+				".indexOn": "timestamp",
+				".read": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
+				".write": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
+				"$uid": {
+					".read": "auth != null && $uid === auth.uid",
+					".write": "auth != null && $uid === auth.uid",
+					".validate": "newData.hasChildren(['text', 'timestamp']) && newData.child('text').isString() && newData.child('timestamp').isNumber()"
+				}
+			},
+			"tokens": {
+				".read": "auth != null",
+				".write": "auth != null"
+			}
+		},
+		"posts": {
+			".indexOn": "postTimestamp",
+			".read": "auth != null",
+			".write": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
+			"$postKey": {
+				".read": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
+				".write": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'"
+			}
+		},
+		"rooms": {
+			"$roomId": {
+				".read": "auth != null && auth.provider !== 'Anonymous'",
+				".write": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'"
+			},
+			".read": "auth != null",
+			".write": "auth != null && auth.provider !== 'Anonymous'"
+		}
+	}
+}
