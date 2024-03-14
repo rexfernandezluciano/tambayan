@@ -1046,17 +1046,17 @@ function createRipple(event) {
 				denyButtonText: 'No',
 				showClass: {
 					popup: `
-                       animate__animated
-                       animate__fadeInUp
-                       animate__faster
-                    `
+             animate__animated
+             animate__fadeInUp
+             animate__faster
+         `
 				},
 				hideClass: {
 					popup: `
-                       animate__animated
-                       animate__fadeOutDown
-                       animate__faster
-                   `
+             animate__animated
+             animate__fadeOutDown
+             animate__faster
+          `
 				}
 			}).then((result) => {
 				if (result.isConfirmed) {
@@ -1100,6 +1100,47 @@ function createRipple(event) {
 		});
 	}
 
+	function renderWelcomePage() {
+		$('main').html($($.parseHTML(
+			`<section class="welcome-layout max-h-screen from-slate-50 dark:bg-gray-900">
+				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900">
+					<div class="sm:mx-32 px-3 sm:px-0 py-3 lg:px-5 lg:pl-3">
+						<div class="flex items-center justify-between">
+						<div class="sm:hidden"></div>
+							<div class="flex items-center justify-center sm:justify-start sm:items-start rtl:justify-end">
+								<span class="flex md:me-24 text-xl font-semibold sm:text-2xl madimi-one-regular whitespace-nowrap text-blue-600">tambayan</span>
+							</div>
+							<div class="flex items-center">
+								<div class="flex items-center ms-3">
+									<div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nav>
+				
+				<div class="px-4 sm:px-32 animate__animated animate__fadeIn p-4 pt-4 px-0 sm:pb-0">
+				  <div class="sm:flex sm:items-start sm:justify-start">
+				   <div class="mt-14 sm:w-96">
+				      <p class="text-xs font-bold text-gray-600 dark:text-white">A SOCIAL COMMUNITY NETWORK</p>
+				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">More Fun with Barkada's.</p>
+				      <p class="text-gray-500 text-sm dark:text-gray-400">Even if you\'re a 90's kid, you can join with us. Age is just a number. Tambayan is a new generation.</p>
+				      <button class="dark:text-gray-300 px-4 py-1.5 rounded-xl dark:hover:bg-gray-800 hover:bg-gray-300 border border-gray-300 dark:border-gray-800 mt-3" onclick="window.location.href = '/beta/signup'">Get early access</button>
+				      <p class="text-gray-500 text-sm dark:text-gray-400 mt-3">Alreay have an account? <a href="/auth/login" class="text-blue-600 font-semibold hover:text-blue-400">Sign in here</a>.</p>
+				    </div>
+				    <div class="hidden flex items-end justify-end sm:block mt-14">
+				      <img src="/assets/img/friends.png" class="self-end ms-14 w-72" />
+				    </div>
+				  </div>
+				  <div class="text-center dark:text-white mt-36">
+				    <span class="text-xs dark:text-gray-400">&copy; 2024 Tambayan. All Rights Reserved.</span>
+				  </div>
+				</div>
+			</section>`
+		)));
+	}
+
 	function renderProfilePage() {
 		$('main').html($($.parseHTML(
 			`<section class="profile-layout max-h-screen from-slate-50 dark:bg-gray-900">
@@ -1138,12 +1179,12 @@ function createRipple(event) {
 					snapshot.forEach((user) => {
 						$('title').html(`${data[user.key].displayName} - Tambayan`);
 						$('.profile').html($($.parseHTML(
-						`<div class="profile-page sm:mx-32 py-1.5 mt-10">
+							`<div class="profile-page sm:mx-32 py-1.5 mt-10">
 							<div class="profile-cover h-32 bg-blue-900"></div>
 							<div class="relative -translate-y-12">
 								<div class="px-4 flex justify-between">
 									<img src="${data[user.key].userPhoto}" class="rounded-full border border-gray-600 dark:border-gray-800 w-28 h-28" />
-									<button class="profile-btn-follow-${user.key} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 mt-15 rounded-xl border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${data[user.key].followers ? data[user.key].followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : user.key === auth.currentUser.uid ? 'Edit profile' : 'Follow'}</button>
+									<button class="profile-btn-follow-${user.key} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 mt-15 rounded-xl border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${auth.currentUser ? data[user.key].uid === auth.currentUser.uid ? 'Edit profile' : data[user.key].followers ? data[user.key].followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : 'Follow' : 'Follow'}</button>
 								</div>
 								<h4 class="flex px-4 text-2xl dark:text-white mt-2">${data[user.key].displayName} ${data[user.key].verification === 'verified' ? '<i class="mt-1 ms-2 text-lg fa-sharp fa-solid fa-circle-check text-blue-600"></i>' : ''}</h4>
 								<div class="px-4 flex items-start justify-start gap-2">
@@ -1177,39 +1218,48 @@ function createRipple(event) {
 						)));
 
 						$(`.profile-btn-follow-${user.key}`).click(() => {
-							if (user.key === auth.currentUser.uid) {
-							  new TDialog('This feature isn\'t available right now.').show();
+							if (auth.currentUser) {
+								if (user.key === auth.currentUser.uid) {
+									new TDialog('This feature isn\'t available right now.').show();
+								} else {
+									toggleFollow(user.key, auth.currentUser.uid);
+								}
 							} else {
-								toggleFollow(user.key, auth.currentUser.uid);
+								new TDialog(`Login to follow ${data[user.key].firstName}.`).show();
 							}
 						});
 
-						onChildAdded(query(ref(database, 'posts', limitToFirst(20)), orderByChild('uid'), equalTo(user.key)), (snapshot) => {
-							const post = snapshot.val();
-							if (snapshot.exists()) {
-								get(ref(database, `/users/${user.key}`))
-									.then((snapshot) => {
-										const user1 = snapshot.val();
+						if (auth.currentUser) {
+							onChildAdded(query(ref(database, 'posts', limitToFirst(20)), orderByChild('uid'), equalTo(user.key)), (snapshot) => {
+								const post = snapshot.val();
+								if (snapshot.exists()) {
+									get(ref(database, `/users/${user.key}`))
+										.then((snapshot) => {
+											const user1 = snapshot.val();
 
-										$('.user-post-list').prepend(posts(post, user1)).fadeIn();
-										$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
-										$(`#btn-options-${post.postKey}`).click(() => {
-											$(`#dropdown-${post.postKey}`).toggle('hidden');
+											$('.user-post-list').prepend(posts(post, user1)).fadeIn();
+											$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
+											$(`#btn-options-${post.postKey}`).click(() => {
+												$(`#dropdown-${post.postKey}`).toggle('hidden');
+											});
+
+											$(`#${post.postKey}`).on('click', 'a', (e) => {
+												e.preventDefault();
+											});
+
+											$('.loading-post').remove().fadeOut('slow');
+										}).catch((error) => {
+											console.error(`Load error: `, error.message);
 										});
-
-										$(`#${post.postKey}`).on('click', 'a', (e) => {
-											e.preventDefault();
-										});
-
-										$('.loading-post').remove().fadeOut('slow');
-									}).catch((error) => {
-										console.error(`Load error: `, error.message);
-									});
-							} else {
-								$('.loading-post').remove().fadeOut('slow');
-								$('.user-post-list').html('<p class="mt-16 dark:text-white text-center">There\'s no post yet.</p>');
-							}
-						});
+								} else {
+									$('.loading-post').remove().fadeOut('slow');
+									$('.user-post-list').html('<p class="mt-8 dark:text-white text-center">There\'s no post yet.</p>');
+								}
+							});
+						} else {
+							$('.loading-post').remove().fadeOut('slow');
+							$('.user-post-list').html('<p class="mt-8 dark:text-white text-center">Login to see posts here.</p>');
+						}
 
 						onChildChanged(ref(database, 'posts'), (snapshot) => {
 							const post = snapshot.val();
@@ -1252,6 +1302,11 @@ function createRipple(event) {
 				changePath('/auth/login');
 			}
 		});
+
+		$(window).on('popstate', function (event) {
+			changePath('/');
+			renderHomePage();
+		});
 	}
 
 	function renderLoginPage() {
@@ -1288,6 +1343,7 @@ function createRipple(event) {
 								Login</button>
 						</div>
 
+						<div class="hidden">
 						<div class="mt-7 grid grid-cols-3 items-center text-gray-500">
 							<hr class="border-gray-500" />
 							<p class="text-center text-sm">
@@ -1305,6 +1361,7 @@ function createRipple(event) {
 							class="bg-white border px-4 py-3 w-full font-semibold rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300 signup-btn">
 							Create an account
 						</button>
+					</div>
 					</div>
 
 					<div class="welcome px-5 hidden">
@@ -1735,8 +1792,7 @@ function createRipple(event) {
 				} else {
 
 					if (path() === '/') {
-						renderLoginPage();
-						changePath('/auth/login');
+						renderWelcomePage();
 					}
 
 					if (path() === '/user/' + getLastPathSegment()) {
