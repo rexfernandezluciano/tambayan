@@ -27,6 +27,10 @@
 			{
 				"source": "/user/**",
 				"destination": "/index.html"
+			},
+			{
+				"source": "/beta/signup",
+				"destination": "/index.html"
 			}],
 		"headers": [ {
 			"source": "**/*.@(eot|otf|ttf|ttc|woff|font.css)",

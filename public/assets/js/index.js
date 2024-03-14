@@ -1141,6 +1141,54 @@ function createRipple(event) {
 		)));
 	}
 
+	function renderBetaPage() {
+		$('main').html($($.parseHTML(
+			`<section class="beta-layout max-h-screen from-slate-50 dark:bg-gray-900">
+				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900">
+					<div class="sm:mx-32 px-3 sm:px-0 py-3 lg:px-5 lg:pl-3">
+						<div class="flex items-center justify-between">
+						<div class="sm:hidden"></div>
+							<div class="flex items-center justify-center sm:justify-start sm:items-start rtl:justify-end">
+								<span class="flex md:me-24 text-xl font-semibold sm:text-2xl madimi-one-regular whitespace-nowrap text-blue-600">tambayan</span>
+							</div>
+							<div class="flex items-center">
+								<div class="flex items-center ms-3">
+									<div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nav>
+				
+				<div class="px-4 sm:px-32 animate__animated animate__fadeIn p-4 pt-4 px-0 sm:pb-0">
+				  <div class="sm:flex sm:items-start sm:justify-start">
+				   <div class="mt-14 sm:w-96">
+				      <p class="text-xs font-bold text-gray-600 dark:text-white">JOIN TO BETA</p>
+				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">Early access to Tambayan.</p>
+				      <p class="text-gray-500 text-sm dark:text-gray-400">Get your access to beta before everyone else. Because beta is the first before it\'s release to the public.</p>
+				      <div class="mt-3 border border-gray-300 dark:border-gray-800 flex items-start justify-start rounded-xl">
+				        <input type="text" class="bg-transparent focus:ring-0 ps-3 py-1.5 border-0 dark:text-white w-full" placeholder="Your email" />
+				        <button class="beta-signup dark:text-gray-300 px-4 py-1.5 rounded-e-xl bg-blue-600 dark:hover:bg-gray-800 hover:bg-gray-300 border-s border-gray-300 dark:border-gray-800">Register</button>
+				      </div>
+				      <p class="text-gray-500 text-sm dark:text-gray-400 mt-3">Alreay have an account? <a href="/auth/login" class="text-blue-600 font-semibold hover:text-blue-400">Sign in here</a>.</p>
+				    </div>
+				    <div class="hidden flex items-end justify-end sm:block mt-14">
+				      <img src="/assets/img/friends.png" class="self-end ms-14 w-72" />
+				    </div>
+				  </div>
+				  <div class="text-center dark:text-white mt-36">
+				    <span class="text-xs dark:text-gray-400">&copy; 2024 Tambayan. All Rights Reserved.</span>
+				  </div>
+				</div>
+			</section>`
+		)));
+
+		$('.beta-signup').click(() => {
+			new TDialog('Beta access is coming soon.').show();
+		});
+	}
+
 	function renderProfilePage() {
 		$('main').html($($.parseHTML(
 			`<section class="profile-layout max-h-screen from-slate-50 dark:bg-gray-900">
@@ -1788,11 +1836,19 @@ function createRipple(event) {
 						if (path() === '/user/' + getLastPathSegment()) {
 							renderProfilePage();
 						}
+
+						if (path() === '/beta/signup') {
+							redirect('/');
+						}
 					}
 				} else {
 
 					if (path() === '/') {
 						renderWelcomePage();
+					}
+
+					if (path() === '/beta/signup') {
+						renderBetaPage();
 					}
 
 					if (path() === '/user/' + getLastPathSegment()) {
