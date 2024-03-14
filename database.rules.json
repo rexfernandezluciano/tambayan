@@ -5,7 +5,7 @@
 		"users": {
 			".indexOn": ["creationTimestamp",
 				"username"],
-			".read": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
+			".read": true,
 			".write": "auth != null && auth.provider !== 'Anonymous'",
 			"$uid": {
 				"chats": {
@@ -13,7 +13,7 @@
 					".read": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
 					".write": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
 					"$uid": {
-						".read": true,
+						".read": "auth != null && $uid === auth.uid",
 						".write": "auth != null && $uid === auth.uid",
 						".validate": "newData.hasChildren(['text', 'timestamp']) && newData.child('text').isString() && newData.child('timestamp').isNumber()"
 					}
@@ -31,19 +31,19 @@
 					".write": "auth != null"
 				},
 				"privacy": {
-					".read": "$uid === auth.uid",
-					".write": "$uid === auth.uid"
+					".read": "auth != null && $uid === auth.uid",
+					".write": "auth != null && $uid === auth.uid"
 				},
 				"settings": {
-					".read": "$uid === auth.uid",
-					".write": "$uid === auth.uid"
+					".read": "auth != null && $uid === auth.uid",
+					".write": "auth != null && $uid === auth.uid"
 				}
 			}
 		},
 		"posts": {
 			".indexOn": ["postTimestamp",
 				"uid"],
-			".read": true,
+			".read": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
 			".write": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
 			"$postKey": {
 				".read": "auth != null && auth.token.email_verified === true && auth.provider !== 'Anonymous'",
@@ -57,6 +57,11 @@
 			},
 			".read": "auth != null",
 			".write": "auth != null && auth.provider !== 'Anonymous'"
+		},
+		"beta": {
+			".indexOn": "email",
+			".read": true,
+			".write": true
 		}
 	}
 }

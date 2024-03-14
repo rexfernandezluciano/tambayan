@@ -1168,7 +1168,7 @@ function createRipple(event) {
 				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">Early access to Tambayan.</p>
 				      <p class="text-gray-500 text-sm dark:text-gray-400">Get your access to beta before everyone else. Because beta is the first before it\'s release to the public.</p>
 				      <div class="mt-3 border border-gray-300 dark:border-gray-800 flex items-start justify-start rounded-xl">
-				        <input type="text" class="bg-transparent focus:ring-0 ps-3 py-1.5 border-0 dark:text-white w-full" placeholder="Your email" />
+				        <input type="email" class="beta-email bg-transparent focus:ring-0 ps-3 py-1.5 border-0 dark:text-white w-full" placeholder="Your email" />
 				        <button class="beta-signup dark:text-gray-300 px-4 py-1.5 rounded-e-xl bg-blue-600 dark:hover:bg-gray-800 hover:bg-gray-300 border-s border-gray-300 dark:border-gray-800">Register</button>
 				      </div>
 				      <p class="text-gray-500 text-sm dark:text-gray-400 mt-3">Alreay have an account? <a href="/auth/login" class="text-blue-600 font-semibold hover:text-blue-400">Sign in here</a>.</p>
@@ -1185,7 +1185,31 @@ function createRipple(event) {
 		)));
 
 		$('.beta-signup').click(() => {
-			new TDialog('Beta access is coming soon.').show();
+			const email = $('.beta-email').val();
+			if (email.length < 4) {
+				new TDialog('Email should be 4 and higher.').show();
+				return;
+			}
+			$('.beta-signup').html(loader()).attr('disabled', 'true');
+			get(query(ref(database, 'beta'), orderByChild('email'), equalTo(email)))
+				.then((snapshot) => {
+					if (snapshot.exists()) {
+						$('.beta-signup').html('Register').removeAttr('disabled');
+						new TDialog('You\'re already registered to beta.').show();
+					} else {
+						push(child(ref(database), 'beta'), {
+							email: email,
+							access: false,
+							createdAt: Date.now()
+						}).then(() => {
+							$('.beta-signup').html('Register').removeAttr('disabled');
+							new TDialog('Thanks. You\'ll received a invation link soon.').show();
+						}).catch((error) => {
+							$('.beta-signup').html('Register').removeAttr('disabled');
+							new TDialog('Beta registration isn\'t available at this time.').show();
+						});
+					}
+				});
 		});
 	}
 
@@ -1596,29 +1620,46 @@ function createRipple(event) {
 				return;
 			}
 			$('.btn-create-account').html(loader()).attr('disabled', 'true');
-			createUserWithEmailAndPassword(auth, email, password)
-				.then((authCredential) => {
-					const user = authCredential.user;
-					createUserAccount(user, 'firebase');
-				})
-				.catch((error) => {
-					const errorCode = error.code;
-					const errorMessage = error.message;
-					switch (errorCode) {
-						case 'auth/email-already-in-use':
-							new TDialog('Email address is already used.').show();
-							break;
+			get(query(ref(database, 'beta'), orderByChild('email'), equalTo(email)))
+				.then((snapshot) => {
+					if (snapshot.exists()) {
+						const data = snapshot.val();
+						snapshot.forEach((item) => {
+							const beta = data[item.key];
+							if (beta.access === true) {
+								createUserWithEmailAndPassword(auth, email, password)
+									.then((authCredential) => {
+										const user = authCredential.user;
+										createUserAccount(user, 'firebase');
+									})
+									.catch((error) => {
+										const errorCode = error.code;
+										const errorMessage = error.message;
+										switch (errorCode) {
+											case 'auth/email-already-in-use':
+												new TDialog('Email address is already used.').show();
+												break;
 
-						case 'auth/network-request-failed':
-							new TDialog('Network error.').show();
-							break;
+											case 'auth/network-request-failed':
+												new TDialog('Network error.').show();
+												break;
 
-						default:
-							new TDialog('An error occured. Please try again.').show();
-							break;
+											default:
+												new TDialog('An error occured. Please try again.').show();
+												break;
+										}
+										$('.btn-create-account').html(`Create account`).removeAttr('disabled');
+										console.log(error);
+									});
+							} else {
+								$('.btn-create-account').html(`Create account`).removeAttr('disabled');
+								new TDialog('Only with invite link can signup at this time.').show();
+							}
+						});
+					} else {
+						$('.btn-create-account').html(`Create account`).removeAttr('disabled');
+						new TDialog('Only with invite link can signup at this time.').show();
 					}
-					$('.btn-create-account').html(`Create account`).removeAttr('disabled');
-					console.log(error);
 				});
 		});
 
