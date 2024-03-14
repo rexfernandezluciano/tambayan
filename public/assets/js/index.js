@@ -13,6 +13,7 @@ import {
 	update,
 	query,
 	orderByChild,
+	equalTo,
 	limitToFirst,
 	onValue,
 	onDisconnect,
@@ -92,6 +93,11 @@ function requestPermission() {
 			getWebToken();
 		}
 	});
+}
+
+function getLastPathSegment() {
+	const url = new URL(window.location.href);
+	return url.pathname.split('/').pop();
 }
 
 function toggleLike(uid, id) {
@@ -361,12 +367,57 @@ function createRipple(event) {
 			})
 			.catch((error) => {
 				$('#btn-post').html('Post').removeAttr('disabled');
-				Swal.fire({
-					icon: "error",
-					text: "An error occured. Please try again.",
-				});
+				new TDialog('An error occured. Please try again.').show();
 				console.error('[POST CREATION ERROR]: ', error);
 			});
+	}
+
+	function posts(posts, user) {
+		return $($.parseHTML(
+			`<div class="post-card animate__animated animate__fadeIn px-4 pt-4 pb-3 w-full sm:w-auto sm:ms-14 sm:me-14 bg-white dark:bg-gray-900 dark:text-white border-b dark:border-gray-800 sm:border sm:mt-4 sm:rounded-lg border-gray-300" id="${posts.postKey}">
+							<div class="flex">
+								<img class="w-10 h-10 rounded-full object-cover object-center ring-1 ring-gray-300 me-2" src="${user.userPhoto}" alt="Bordered avatar" />
+								<div class="grid gap-0 text-2sm w-full mt-0.5">
+									<small class="font-bold">${user.displayName} ${user.verification === 'verified' ? '<i class="ms-1 fa-sharp fa-solid fa-circle-check text-blue-600 text-sm"></i>' : ''}</small>
+									<small class="text-gray-600 dark:text-gray-200">${formatRelativeTime(convertUTCToLocal(posts.postTimestamp, getTimezone()))} &bull; <i class="fa-sharp fa-solid fa-earth-asia text-gray-600 dark:text-gray-200"></i></small>
+								</div>
+								<div class="relative inline-block text-left">
+								  <button class="bg-transparent" id="btn-options-${posts.postKey}">
+									  <i class="fa-sharp fa-solid fa-ellipsis w-6 h-6 text-gray-800 dark:text-white group-hover:text-gray-600"></i>
+								  </button>
+								  <div id="dropdown-${posts.postKey}" class="absolute hidden z-10 -ml-48 mt-3 transform px-2 w-48 sm:px-0 lg:ml-0 lg:left-1/2 lg:-translate-x-1/2">
+                    <div class="rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 overflow-hidden">
+                     <div class="py-1">
+                     ${posts.uid === auth.currentUser.uid ?
+				'<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">Edit post</a>' +
+				'<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">Delete post</a>' :
+				'<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">Report post</a>'}
+                       <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">Copy link</a>
+                     </div>
+                   </div>
+                </div>
+                </div>
+							</div>
+							<div class="post-body px-2 py-2${posts.postBodyColor !== 0 ? 'w-full my-2 h-72 sm:h-96 sm:mb-3 text-center flex items-center justify-center bg-blue-900 text-white' : ''}">
+								${truncate(convertLinksAndHashtagToHTML(posts.postBody.replace('\r\n', '<br>').replace('\n', '<br>')), 200)}
+							</div>
+							${posts.images != null ? '<img class="border border-gray-300 dark:border-gray-800 w-full sm:max-h-96 sm:object-center mb-3 rounded-xl object-cover bg-no-repeat bg-center" src="' + posts.images[0] + '"/>' : ''}
+							<div class="post-action flex items-center justify-center grid-cols-3 font-medium">
+								<button type="button" class="w-full flex items-center justify-center group" id="btn-like-${posts.postKey}">
+									<i class="text-xl fa-sharp ${posts.likes ? posts.likes[auth.currentUser.uid] === true ? 'fa-solid text-blue-600' : 'fa-regular' : 'fa-regular'} fa-heart w-6 animate__animated" id="btn-like-icon-${posts.postKey}"></i>
+									<span class="h-6 ms-1" id="btn-like-count-${posts.postKey}">${posts.likeCount ? formatNumber(posts.likeCount) : '0'}</span>
+								</button>
+								<button type="button" class="w-full flex items-center justify-center group">
+									<i class="text-xl fa-sharp fa-regular fa-comment w-6"></i>
+									<span class="h-6 ms-1">0</span>
+								</button>
+								<button type="button" class="w-full flex items-center justify-center group">
+									<i class="text-xl fa-sharp fa-regular fa-share-from-square w-6"></i>
+									<span class="h-6 ms-1">0</span>
+								</button>
+							</div>
+						</div>`
+		));
 	}
 
 	function loader() {
@@ -413,8 +464,7 @@ function createRipple(event) {
 
 			confirmPasswordReset(auth, actionCode, newPassword).then((resp) => {
 			}).catch((error) => {
-				// Error occurred during confirmation. The code might have expired or the
-				// password is too weak.
+				new TDialog('An error occured. Please try again.').show();
 			});
 		}).catch((error) => {
 			// Invalid or expired action code. Ask user to try to reset the password
@@ -542,7 +592,7 @@ function createRipple(event) {
 	function renderHomePage() {
 		$('title').html('Home — Tambayan');
 		$('main').html($($.parseHTML(
-			`<section class="main-home-layout animate__animated animate__fadeIn animate__delay-2s max-h-screen from-slate-50 dark:bg-gray-900">
+			`<section class="main-home-layout max-h-screen from-slate-50 dark:bg-gray-900">
 				<nav class="navbar fixed top-0 z-50 w-full bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm border-b border-gray-300 dark:border-gray-800 sm:dark:border-gray-800">
 					<div class="px-3 py-3 lg:px-5 lg:pl-3">
 						<div class="flex items-center justify-between">
@@ -558,7 +608,7 @@ function createRipple(event) {
 							<div class="flex items-center">
 								<div class="flex items-center ms-3">
 									<div>
-										<button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" aria-expanded="false">
+										<button type="button" class="btn-profile flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" aria-expanded="false">
 											<span class="sr-only">Open user menu</span>
 											<img class="w-8 h-8 navbar-avatar object-cover object-center rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo" />
 										</button>
@@ -613,8 +663,8 @@ function createRipple(event) {
 				<div id="sidebar-overlay" class="hidden z-30 h-full max-w-full fixed top-0 start-0 bottom-0 end-0">	
 				</div>
 
-				<div class="pb-32 p-4 pt-4 px-0 sm:ml-64 sm:pb-0">
-					<div class="p-2 px-0 rounded-lg mt-10">
+				<div class="content animate__animated animate__fadeIn animate__delay-2s pb-32 p-4 pt-4 px-0 sm:ml-64 sm:pb-0">
+					<div class="p-2 px-0 mt-10">
 						<div id="home-layout">
 							<div class="text-sm font-medium text-center text-gray-500 border-0 dark:bg-gray-900 dark:text-white">
 								<ul class="flex -mb-px" data-tabs-toggle="#default-tab-content" role="tablist">
@@ -810,7 +860,7 @@ function createRipple(event) {
 			});
 		}
 
-		$('#bottom-home, #sidebar-button-home').click(() => {
+		$('#sidebar-button-home').click(() => {
 			$('title').html('Home — Tambayan');
 			changePath('/');
 			home();
@@ -823,7 +873,7 @@ function createRipple(event) {
 			isOpen = false;
 		});
 
-		$('#bottom-search, #sidebar-button-search').click(() => {
+		$('#sidebar-button-search').click(() => {
 			$('title').html('Search — Tambayan');
 			changePath('/search');
 			search();
@@ -836,7 +886,7 @@ function createRipple(event) {
 			isOpen = false;
 		});
 
-		$('#bottom-notification, #sidebar-button-notification').click(() => {
+		$('#sidebar-button-notification').click(() => {
 			$('title').html('Notification — Tambayan');
 			changePath('/notifications');
 			notifications();
@@ -849,7 +899,7 @@ function createRipple(event) {
 			isOpen = false;
 		});
 
-		$('#bottom-inbox, #sidebar-button-inbox').click(() => {
+		$('#sidebar-button-inbox').click(() => {
 			$('title').html('Messages — Tambayan');
 			changePath('/messages');
 			messages();
@@ -863,66 +913,19 @@ function createRipple(event) {
 		});
 
 		onChildAdded(query(ref(database, 'posts', orderByChild('postTimestamp'), limitToFirst(20))), (snapshot) => {
-			const posts = snapshot.val();
-			const uid = posts.uid;
+			const post = snapshot.val();
+			const uid = post.uid;
 			get(ref(database, `/users/${uid}`))
 				.then((snapshot) => {
 					const user = snapshot.val();
-					const name = user.displayName;
-					const username = user.username;
-					const avatar = user.userPhoto;
-					$('.post-list').prepend($($.parseHTML(
-						`<div class="post-card animate__animated animate__fadeIn px-4 pt-4 pb-3 w-full sm:w-auto sm:ms-14 sm:me-14 bg-white dark:bg-gray-900 dark:text-white border-b dark:border-gray-800 sm:border sm:mt-4 sm:rounded-lg border-gray-300" id="${posts.postKey}">
-							<div class="flex">
-								<img class="w-10 h-10 rounded-full object-cover object-center ring-1 ring-gray-300 me-2" src="${avatar}" alt="Bordered avatar" />
-								<div class="grid gap-0 text-2sm w-full mt-0.5">
-									<small class="font-bold">${name} ${user.verification === 'verified' ? '<i class="ms-1 fa-sharp fa-solid fa-circle-check text-blue-600 text-sm"></i>' : ''}</small>
-									<small class="text-gray-600 dark:text-gray-200">${formatRelativeTime(convertUTCToLocal(posts.postTimestamp, getTimezone()))} &bull; <i class="fa-sharp fa-solid fa-earth-asia text-gray-600 dark:text-gray-200"></i></small>
-								</div>
-								<div class="relative inline-block text-left">
-								  <button class="bg-transparent" id="btn-options-${posts.postKey}">
-									  <i class="fa-sharp fa-solid fa-ellipsis w-6 h-6 text-gray-800 dark:text-white group-hover:text-gray-600"></i>
-								  </button>
-								  <div id="dropdown-${posts.postKey}" class="absolute hidden z-10 -ml-48 mt-3 transform px-2 w-48 sm:px-0 lg:ml-0 lg:left-1/2 lg:-translate-x-1/2">
-                    <div class="rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 overflow-hidden">
-                     <div class="py-1">
-                     ${posts.uid === auth.currentUser.uid ?
-							'<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">Edit post</a>' +
-							'<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">Delete post</a>' :
-							'<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">Report post</a>'}
-                       <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">Copy link</a>
-                     </div>
-                   </div>
-                </div>
-                </div>
-							</div>
-							<div class="post-body px-2 py-2${posts.postBodyColor !== 0 ? 'w-full my-2 h-72 sm:h-96 sm:mb-3 text-center flex items-center justify-center bg-blue-900 text-white' : ''}">
-								${truncate(convertLinksAndHashtagToHTML(posts.postBody.replace('\r\n', '<br>').replace('\n', '<br>')), 200)}
-							</div>
-							${posts.images != null ? '<img class="border border-gray-300 dark:border-gray-800 w-full sm:max-h-96 sm:object-center mb-3 rounded-xl object-cover bg-no-repeat bg-center" src="' + posts.images[0] + '"/>' : ''}
-							<div class="post-action flex items-center justify-center grid-cols-3 font-medium">
-								<button type="button" class="w-full flex items-center justify-center group" id="btn-like-${posts.postKey}">
-									<i class="text-xl fa-sharp ${posts.likes ? posts.likes[auth.currentUser.uid] === true ? 'fa-solid text-blue-600' : 'fa-regular' : 'fa-regular'} fa-heart w-6 animate__animated" id="btn-like-icon-${posts.postKey}"></i>
-									<span class="h-6 ms-1" id="btn-like-count-${posts.postKey}">${posts.likeCount ? formatNumber(posts.likeCount) : '0'}</span>
-								</button>
-								<button type="button" class="w-full flex items-center justify-center group">
-									<i class="text-xl fa-sharp fa-regular fa-comment w-6"></i>
-									<span class="h-6 ms-1">0</span>
-								</button>
-								<button type="button" class="w-full flex items-center justify-center group">
-									<i class="text-xl fa-sharp fa-regular fa-share-from-square w-6"></i>
-									<span class="h-6 ms-1">0</span>
-								</button>
-							</div>
-						</div>`
-					))).fadeIn();
 
-					$(`#btn-like-${posts.postKey}`).click(() => toggleLike(auth.currentUser.uid, posts.postKey));
-					$(`#btn-options-${posts.postKey}`).click(() => {
-						$(`#dropdown-${posts.postKey}`).toggle('hidden');
+					$('.post-list').prepend(posts(post, user)).fadeIn();
+					$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
+					$(`#btn-options-${post.postKey}`).click(() => {
+						$(`#dropdown-${post.postKey}`).toggle('hidden');
 					});
 
-					$(`#${posts.postKey}`).on('click', 'a', (e) => {
+					$(`#${post.postKey}`).on('click', 'a', (e) => {
 						e.preventDefault();
 						//
 					});
@@ -957,16 +960,21 @@ function createRipple(event) {
 			if (user.uid !== auth.currentUser.uid) {
 				$('.people-list').prepend($($.parseHTML(
 					`
-					<button class="bg-transparent text-center w-20">
+					<button id="people-${user.uid}" class="bg-transparent text-center w-20">
 						<img class="w-16 h-16 mx-auto rounded-full" src="${user.userPhoto}"/>
 						<p class="font-small mt-2 h-5">${truncate2(user.firstName, 16)}</p>
 					</button>
 				`
 				))).fadeIn();
+				
+				$(`#people-${user.uid}`).click(() => {
+					changePath(`/user/${user.username}`);
+					renderProfilePage();
+				});
 
 				$('.search-people-list').prepend($($.parseHTML(
 					`
-					<div class="inline-flex w-full my-2">
+					<div id="search-${user.uid}" class="inline-flex w-full my-2">
 						<img class="rounded-full object-cover w-10 h-10 bg-white" src="${user.userPhoto}"/>
 						<div class="p-2 w-full">
 						  <p class"mb-2 h-16 me-2 flex w-full">${truncate2(user.displayName, 16)} ${user.verification === 'verified' ? '<i class="ms-1 fa-sharp fa-solid fa-circle-check text-blue-600"></i>' : ''}</p>
@@ -977,47 +985,273 @@ function createRipple(event) {
 				  </div>
 				`
 				))).fadeIn();
+				
+				$(`#search-${user.uid}`).click(() => {
+					changePath(`/user/${user.username}`);
+					renderProfilePage();
+				});
 			}
+
 			$(`#btn-follow-${user.uid}`).click(() => toggleFollow(user.uid, auth.currentUser.uid));
+		});
+
+		onChildChanged(ref(database, 'users'), (snapshot) => {
+			const user = snapshot.val();
+			if (user.followers && user.followers[auth.currentUser.uid] == true) {
+				$(`#btn-follow-${user.uid}`).html('Unfollow');
+			} else {
+				$(`#btn-follow-${user.uid}`).html('Follow');
+			}
+		});
+
+		const user = auth.currentUser;
+
+		get(ref(database, `/users/${user.uid}`))
+			.then((snapshot) => {
+				const data = snapshot.val();
+
+				$('.navbar-avatar').attr('src', data.userPhoto);
+				if (user.displayName === null && user.photoURL === null) {
+					updateProfile(user, {
+						displayName: data.displayName,
+						photoURL: data.userPhoto
+					});
+				}
+
+				if (user.photoURL != null && data.userPhoto !== user.photoURL) {
+					update(ref(database, `users/${user.uid}`), {
+						userPhoto: user.photoURL
+					});
+				}
+
+				$('.btn-profile').click(() => {
+					changePath(`/user/${data.username}`);
+					renderProfilePage();
+				})
+			});
+
+		$('.btn-signout').click(() => {
+			$('#sidebar-menu').addClass('-translate-x-full');
+			$('#sidebar-menu').removeClass('translate-x-0');
+			$('#sidebar-overlay').addClass('hidden');
+			$('body').removeClass('overflow-y-hidden');
+			$('#navbar-toggler').removeClass('fa-xmark');
+			$('#navbar-toggler').addClass('fa-bars');
+			isOpen = false;
+			Swal.fire({
+				icon: 'question',
+				title: 'Are you sure you want to signout?',
+				showDenyButton: true,
+				confirmButtonText: 'Signout',
+				denyButtonText: 'No',
+				showClass: {
+					popup: `
+                       animate__animated
+                       animate__fadeInUp
+                       animate__faster
+                    `
+				},
+				hideClass: {
+					popup: `
+                       animate__animated
+                       animate__fadeOutDown
+                       animate__faster
+                   `
+				}
+			}).then((result) => {
+				if (result.isConfirmed) {
+					signOut(auth).then(() => {
+						renderLoginPage();
+						changePath('/auth/login');
+					})
+						.catch(() => {
+							new TDialog('An error occured. Please try again.').show();
+						});
+				} else if (result.isDenied) {
+					//
+				}
+			});
+		});
+
+		renderCreatePost();
+		$('.close-post').click(() => {
+			$('.create-post-layout').addClass('hidden');
+			$('body').removeClass('overflow-y-hidden');
+		});
+		$('.btn-create-post').click(() => {
+			$('body').addClass('overflow-y-hidden');
+			$('.create-post-layout').removeClass('hidden');
+			$('#sidebar-menu').addClass('-translate-x-full');
+			$('#sidebar-menu').removeClass('translate-x-0');
+			$('#sidebar-overlay').addClass('hidden');
+			$('body').removeClass('overflow-y-hidden');
+			$('#navbar-toggler').removeClass('fa-xmark');
+			$('#navbar-toggler').addClass('fa-bars');
+			isOpen = false;
+		});
+
+		$('#btn-post').click(() => {
+			if ($('#post-content').val() === '') {
+				new TDialog('Post must not be empty.').show();
+				return;
+			}
+			$('#btn-post').html(loader()).attr('disabled', 'true');
+			createPost(auth.currentUser);
 		});
 	}
 
-	onChildChanged(ref(database, 'users'), (snapshot) => {
-		const user = snapshot.val();
-		if (user.followers && user.followers[auth.currentUser.uid] == true) {
-			$(`#btn-follow-${user.uid}`).html('Unfollow');
-		} else {
-			$(`#btn-follow-${user.uid}`).html('Follow');
-		}
-	});
-
 	function renderProfilePage() {
 		$('main').html($($.parseHTML(
-			`<section class="profile-layout animate__animated animate__fadeIn animate__delay-2s max-h-screen from-slate-50 dark:bg-gray-900">
-			<nav class="navbar fixed top-0 z-50 w-full bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm border-b border-gray-300 dark:border-gray-800 sm:dark:border-gray-800">
-				<div class="px-3 py-3 lg:px-5 lg:pl-3">
-					<div class="flex items-center justify-between">
-						<button aria-controls="sidebar-menu" type="button" class="btn-sidebar inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
-							<span class="sr-only">Open sidebar</span>
-							<i id="profile-back-btn" class="fa-sharp fa-solid fa-arrow-left-long w-6 icons"></i>
-						</button>
-						<div class="flex items-center justify-start rtl:justify-end">
-							<span class="flex md:me-24 text-xl font-semibold sm:text-2xl whitespace-nowrap text-gray-900 dark:text-white">User</span>
-						</div>
-						<div class="flex items-center">
-							<div class="flex items-center ms-3">
-								<div>
-									<button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" aria-expanded="false">
-										<span class="sr-only">Open options</span>
-										<i class="fa-sharp fa-solid fa-ellipsis icons"></i>
-									</button>
+			`<section class="profile-layout max-h-screen from-slate-50 dark:bg-gray-900">
+				<nav class="navbar fixed top-0 z-50 w-full bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm border-b border-gray-300 dark:border-gray-800 sm:dark:border-gray-800">
+					<div class="px-3 py-3 lg:px-5 lg:pl-3">
+						<div class="flex items-center justify-between">
+							<button type="button" class="btn-back inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
+								<span class="sr-only">Open sidebar</span>
+								<i id="profile-back-btn" class="fa-sharp fa-solid fa-arrow-left-long w-6 icons"></i>
+							</button>
+							<div class="flex items-center justify-start rtl:justify-end">
+								<span class="flex md:me-24 text-xl font-semibold sm:text-2xl whitespace-nowrap text-gray-900 dark:text-white"></span>
+							</div>
+							<div class="flex items-center">
+								<div class="flex items-center ms-3">
+									<div>
+										<button type="button" class="flex text-sm">
+											<span class="sr-only">Open options</span>
+											<i class="fa-sharp fa-solid fa-ellipsis text-gray-600 dark:text-white icons"></i>
+										</button>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
+				</nav>
+				
+				<div class="profile animate__animated animate__fadeIn p-4 pt-4 px-0 sm:ml-64 sm:pb-0">
 				</div>
-			</nav>
-		</section>`)));
+			</section>`)));
+
+		get(query(ref(database, 'users'), orderByChild('username'), equalTo(getLastPathSegment())))
+			.then((snapshot) => {
+				if (snapshot.exists()) {
+					const data = snapshot.val();
+					snapshot.forEach((user) => {
+						$('title').html(`${data[user.key].displayName} - Tambayan`);
+						$('.profile').html($($.parseHTML(
+							`<div class="profile-page py-1.5 mt-10">
+							<div class="profile-cover h-32 bg-blue-900"></div>
+							<div class="relative -translate-y-12">
+								<div class="px-4 flex justify-between">
+									<img src="${data[user.key].userPhoto}" class="rounded-full border border-gray-600 dark:border-gray-800 w-28 h-28" />
+									<button class="profile-btn-follow self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 mt-15 rounded-xl border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${data[user.key].followers ? data[user.key].followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : data[user.key].uid === auth.currentUser.uid ? 'Edit profile' : 'Follow'}</button>
+								</div>
+								<h4 class="flex px-4 text-2xl dark:text-white mt-2">${data[user.key].displayName} ${data[user.key].verification === 'verified' ? '<i class="mt-1 ms-2 text-lg fa-sharp fa-solid fa-circle-check text-blue-600"></i>' : ''}</h4>
+								<div class="px-4 flex items-start justify-start gap-2">
+									<p class="text-gray-600 dark:text-white"><span class="font-bold">${formatNumber(data[user.key].followerCount)}</span> followers</p>
+									<p class="text-gray-600 dark:text-white"><span class="font-bold">${formatNumber(data[user.key].followingCount)}</span> followings</p>
+								</div>
+								${data[user.key].biodata.bio !== null && data[user.key].biodata.bio !== 'none' ?
+								'<div class="px-4 py-1 bio">'
+								+ '<p class="text-sm text-gray-600 dark:text-white">' + data[user.key].biodata.bio + '</p>' +
+								'</div>' : ''}
+								${data[user.key].biodata.currentCity !== 'none' ?
+								'<div class="mt-2 px-4 flex items-start justify-start gap-2">'
+								+ '<span class="text-xs bg-gray-300 rounded-xl px-2 py-1.5 text-gray-600 dark:text-white dark:bg-gray-800"><i class="fa-sharp fa-solid fa-location-dot dark:text-white me-1.5"></i>' + data[user.key].biodata.currentCity + '</span>' +
+								'</div>' : ''}
+								</div>
+								<hr class="mb-2 border-gray-300 dark:border-gray-800">
+								<div class="flex justify-between">
+								  <h4 class="text-xl px-4 text-gray-600 dark:text-white">Posts</h4>
+								</div>
+								<hr class="mt-3 mb-3 border-gray-300 dark:border-gray-800">
+								<div class="user-post-list">
+										<div class="w-full max-h-screen flex items-center justify-center text-center p-5 loading-post">
+											<svg aria-hidden="true" role="status" style="font-size: 35px;" class="inline w-10 me-3 mt-3 text-blue-600 animate-spin" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+												<path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="#E5E7EB" />
+												<path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentColor" />
+											</svg>
+										</div>
+								</div>
+							</div>
+						</div>`
+						)));
+
+						$('.profile-btn-follow').click(() => {
+							if (user.key === auth.currentUser.uid) {
+								//
+							} else {
+								toggleFollow(user.key, auth.currentUser.uid);
+							}
+						});
+
+						onChildAdded(query(ref(database, 'posts', limitToFirst(20)), orderByChild('uid'), equalTo(user.key)), (snapshot) => {
+							const post = snapshot.val();
+							if (snapshot.exists()) {
+								get(ref(database, `/users/${user.key}`))
+								.then((snapshot) => {
+									const user1 = snapshot.val();
+
+									$('.user-post-list').prepend(posts(post, user1)).fadeIn();
+									$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
+									$(`#btn-options-${post.postKey}`).click(() => {
+										$(`#dropdown-${post.postKey}`).toggle('hidden');
+									});
+
+									$(`#${post.postKey}`).on('click', 'a', (e) => {
+										e.preventDefault();
+									});
+
+									$('.loading-post').remove().fadeOut('slow');
+								}).catch((error) => {
+									console.error(`Load error: `, error.message);
+								});
+							} else {
+								$('.loading-post').remove().fadeOut('slow');
+								$('.user-post-list').html('<p class="mt-16 dark:text-white text-center">There\'s no post yet.</p>');
+							}
+						});
+
+						onChildChanged(ref(database, 'posts'), (snapshot) => {
+							const post = snapshot.val();
+							const key = snapshot.key;
+							$(`#btn-like-count-${key}`).text(formatNumber(post.likeCount));
+							if (post.likes && post.likes[auth.currentUser.uid] === true) {
+								$(`#btn-like-icon-${key}`).removeClass('fa-regular');
+								$(`#btn-like-icon-${key}`).addClass('fa-solid text-blue-600 animate__bounceIn');
+							} else {
+								$(`#btn-like-icon-${key}`).removeClass('fa-solid text-blue-600 animate__bounceIn');
+								$(`#btn-like-icon-${key}`).addClass('fa-regular');
+							}
+						});
+
+						onChildRemoved(ref(database, 'posts'), (snapshot) => {
+							const key = snapshot.key;
+							$(`#${key}`).remove().fadeOut();
+						});
+					});
+
+					onChildChanged(ref(database, 'users'), (snapshot) => {
+						const user = snapshot.val();
+						if (user.followers && user.followers[auth.currentUser.uid] == true) {
+							$(`#profile-btn-follow-${user.uid}`).html('Unfollow');
+						} else {
+							$(`#profile-btn-follow-${user.uid}`).html('Follow');
+						}
+					});
+				} else {
+					$('.profile').html('<p class="mt-32 dark:text-white text-center">User not found.</p>');
+				}
+			});
+
+		$('.btn-back').click(() => {
+			if (auth.currentUser) {
+				renderHomePage();
+				changePath('/');
+			} else {
+				renderLoginPage();
+				changePath('/auth/login');
+			}
+		});
 	}
 
 	function renderLoginPage() {
@@ -1471,7 +1705,6 @@ function createRipple(event) {
 		if (navigator.onLine) {
 			onAuthStateChanged(auth, (user) => {
 				if (user) {
-					console.log(user);
 					if (!user.emailVerified) {
 						signOut(auth).then(() => {
 							renderLoginPage();
@@ -1481,93 +1714,6 @@ function createRipple(event) {
 						getWebToken();
 						if (path() === '/') {
 							renderHomePage();
-							get(ref(database, `/users/${user.uid}`))
-								.then((snapshot) => {
-									const data = snapshot.val();
-
-									$('.navbar-avatar').attr('src', data.userPhoto);
-									if (user.displayName === null && user.photoURL === null) {
-										updateProfile(user, {
-											displayName: data.displayName,
-											photoURL: data.userPhoto
-										});
-									}
-
-									if (user.photoURL != null && data.userPhoto !== user.photoURL) {
-										update(ref(database, `users/${user.uid}`), {
-											userPhoto: user.photoURL
-										});
-									}
-								});
-
-							$('.btn-signout').click(() => {
-								$('#sidebar-menu').addClass('-translate-x-full');
-								$('#sidebar-menu').removeClass('translate-x-0');
-								$('#sidebar-overlay').addClass('hidden');
-								$('body').removeClass('overflow-y-hidden');
-								$('#navbar-toggler').removeClass('fa-xmark');
-								$('#navbar-toggler').addClass('fa-bars');
-								isOpen = false;
-								Swal.fire({
-									icon: 'question',
-									title: 'Are you sure you want to signout?',
-									showDenyButton: true,
-									confirmButtonText: 'Signout',
-									denyButtonText: 'No',
-									showClass: {
-										popup: `
-                       animate__animated
-                       animate__fadeInUp
-                       animate__faster
-                    `
-									},
-									hideClass: {
-										popup: `
-                       animate__animated
-                       animate__fadeOutDown
-                       animate__faster
-                   `
-									}
-								}).then((result) => {
-									if (result.isConfirmed) {
-										signOut(auth).then(() => {
-											renderLoginPage();
-											changePath('/auth/login');
-										})
-											.catch(() => {
-												new TDialog('An error occured. Please try again.').show();
-											});
-									} else if (result.isDenied) {
-										//
-									}
-								});
-							});
-
-							renderCreatePost();
-							$('.close-post').click(() => {
-								$('.create-post-layout').addClass('hidden');
-								$('body').removeClass('overflow-y-hidden');
-							});
-							$('.btn-create-post').click(() => {
-								$('body').addClass('overflow-y-hidden');
-								$('.create-post-layout').removeClass('hidden');
-								$('#sidebar-menu').addClass('-translate-x-full');
-								$('#sidebar-menu').removeClass('translate-x-0');
-								$('#sidebar-overlay').addClass('hidden');
-								$('body').removeClass('overflow-y-hidden');
-								$('#navbar-toggler').removeClass('fa-xmark');
-								$('#navbar-toggler').addClass('fa-bars');
-								isOpen = false;
-							});
-
-							$('#btn-post').click(() => {
-								if ($('#post-content').val() === '') {
-									new TDialog('Post must not be empty.').show();
-									return;
-								}
-								$('#btn-post').html(loader()).attr('disabled', 'true');
-								createPost(auth.currentUser);
-							});
 						}
 
 						if (path() === '/auth/login') {
@@ -1581,12 +1727,20 @@ function createRipple(event) {
 						if (path() === '/auth') {
 							redirect('/');
 						}
+
+						if (path() === '/user/' + getLastPathSegment()) {
+							renderProfilePage();
+						}
 					}
 				} else {
 
 					if (path() === '/') {
 						renderLoginPage();
 						changePath('/auth/login');
+					}
+
+					if (path() === '/user/' + getLastPathSegment()) {
+						renderProfilePage();
 					}
 
 					if (path() === '/auth/login') {
