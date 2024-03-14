@@ -966,7 +966,7 @@ function createRipple(event) {
 					</button>
 				`
 				))).fadeIn();
-				
+
 				$(`#people-${user.uid}`).click(() => {
 					changePath(`/user/${user.username}`);
 					renderProfilePage();
@@ -985,7 +985,7 @@ function createRipple(event) {
 				  </div>
 				`
 				))).fadeIn();
-				
+
 				$(`#search-${user.uid}`).click(() => {
 					changePath(`/user/${user.username}`);
 					renderProfilePage();
@@ -1104,9 +1104,9 @@ function createRipple(event) {
 		$('main').html($($.parseHTML(
 			`<section class="profile-layout max-h-screen from-slate-50 dark:bg-gray-900">
 				<nav class="navbar fixed top-0 z-50 w-full bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm border-b border-gray-300 dark:border-gray-800 sm:dark:border-gray-800">
-					<div class="px-3 py-3 lg:px-5 lg:pl-3">
+					<div class="sm:mx-32 px-3 py-3 lg:px-5 lg:pl-3">
 						<div class="flex items-center justify-between">
-							<button type="button" class="btn-back inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
+							<button type="button" class="btn-back inline-flex items-center p-2 text-sm text-gray-500 rounded-lg focus:outline-none dark:text-gray-400">
 								<span class="sr-only">Open sidebar</span>
 								<i id="profile-back-btn" class="fa-sharp fa-solid fa-arrow-left-long w-6 icons"></i>
 							</button>
@@ -1127,7 +1127,7 @@ function createRipple(event) {
 					</div>
 				</nav>
 				
-				<div class="profile animate__animated animate__fadeIn p-4 pt-4 px-0 sm:ml-64 sm:pb-0">
+				<div class="profile animate__animated animate__fadeIn p-4 pt-4 px-0 sm:pb-0">
 				</div>
 			</section>`)));
 
@@ -1138,12 +1138,12 @@ function createRipple(event) {
 					snapshot.forEach((user) => {
 						$('title').html(`${data[user.key].displayName} - Tambayan`);
 						$('.profile').html($($.parseHTML(
-							`<div class="profile-page py-1.5 mt-10">
+						`<div class="profile-page sm:mx-32 py-1.5 mt-10">
 							<div class="profile-cover h-32 bg-blue-900"></div>
 							<div class="relative -translate-y-12">
 								<div class="px-4 flex justify-between">
 									<img src="${data[user.key].userPhoto}" class="rounded-full border border-gray-600 dark:border-gray-800 w-28 h-28" />
-									<button class="profile-btn-follow self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 mt-15 rounded-xl border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${data[user.key].followers ? data[user.key].followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : data[user.key].uid === auth.currentUser.uid ? 'Edit profile' : 'Follow'}</button>
+									<button class="profile-btn-follow-${user.key} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 mt-15 rounded-xl border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${data[user.key].followers ? data[user.key].followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : user.key === auth.currentUser.uid ? 'Edit profile' : 'Follow'}</button>
 								</div>
 								<h4 class="flex px-4 text-2xl dark:text-white mt-2">${data[user.key].displayName} ${data[user.key].verification === 'verified' ? '<i class="mt-1 ms-2 text-lg fa-sharp fa-solid fa-circle-check text-blue-600"></i>' : ''}</h4>
 								<div class="px-4 flex items-start justify-start gap-2">
@@ -1176,9 +1176,9 @@ function createRipple(event) {
 						</div>`
 						)));
 
-						$('.profile-btn-follow').click(() => {
+						$(`.profile-btn-follow-${user.key}`).click(() => {
 							if (user.key === auth.currentUser.uid) {
-								//
+							  new TDialog('This feature isn\'t available right now.').show();
 							} else {
 								toggleFollow(user.key, auth.currentUser.uid);
 							}
@@ -1188,23 +1188,23 @@ function createRipple(event) {
 							const post = snapshot.val();
 							if (snapshot.exists()) {
 								get(ref(database, `/users/${user.key}`))
-								.then((snapshot) => {
-									const user1 = snapshot.val();
+									.then((snapshot) => {
+										const user1 = snapshot.val();
 
-									$('.user-post-list').prepend(posts(post, user1)).fadeIn();
-									$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
-									$(`#btn-options-${post.postKey}`).click(() => {
-										$(`#dropdown-${post.postKey}`).toggle('hidden');
+										$('.user-post-list').prepend(posts(post, user1)).fadeIn();
+										$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
+										$(`#btn-options-${post.postKey}`).click(() => {
+											$(`#dropdown-${post.postKey}`).toggle('hidden');
+										});
+
+										$(`#${post.postKey}`).on('click', 'a', (e) => {
+											e.preventDefault();
+										});
+
+										$('.loading-post').remove().fadeOut('slow');
+									}).catch((error) => {
+										console.error(`Load error: `, error.message);
 									});
-
-									$(`#${post.postKey}`).on('click', 'a', (e) => {
-										e.preventDefault();
-									});
-
-									$('.loading-post').remove().fadeOut('slow');
-								}).catch((error) => {
-									console.error(`Load error: `, error.message);
-								});
 							} else {
 								$('.loading-post').remove().fadeOut('slow');
 								$('.user-post-list').html('<p class="mt-16 dark:text-white text-center">There\'s no post yet.</p>');
@@ -1233,9 +1233,9 @@ function createRipple(event) {
 					onChildChanged(ref(database, 'users'), (snapshot) => {
 						const user = snapshot.val();
 						if (user.followers && user.followers[auth.currentUser.uid] == true) {
-							$(`#profile-btn-follow-${user.uid}`).html('Unfollow');
+							$(`.profile-btn-follow-${user.uid}`).html('Unfollow');
 						} else {
-							$(`#profile-btn-follow-${user.uid}`).html('Follow');
+							$(`.profile-btn-follow-${user.uid}`).html('Follow');
 						}
 					});
 				} else {
@@ -1603,7 +1603,7 @@ function createRipple(event) {
 
 	function renderCreatePost() {
 		$('main').append($($.parseHTML(
-			`<section class="create-post-layout animate__animated fixed hidden bg-white dark:bg-gray-900 z-50 top-0 start-0 end-0 w-full h-full max-h-screen sm:bg-white sm:h-96 sm:w-96 sm:rounded-xl sm:border sm:mx-auto sm:mt-32 border-gray-300">
+			`<section class="create-post-layout animate__animated fixed hidden bg-white dark:bg-gray-900 z-50 top-0 start-0 end-0 w-full h-full max-h-screen sm:bg-white sm:h-96 sm:w-96 sm:rounded-xl sm:border sm:mx-auto sm:mt-32 dark:border-gray-800">
 				<nav class="navbar top-0 z-50 w-full border-b border-gray-300 dark:bg-gray-900 dark:border-gray-800 sm:border-b-2">
 					<div class="px-3 py-2 lg:px-5 lg:pl-3">
 						<div class="flex items-center justify-between">

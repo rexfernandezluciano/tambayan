@@ -18,6 +18,14 @@
 						".validate": "newData.hasChildren(['text', 'timestamp']) && newData.child('text').isString() && newData.child('timestamp').isNumber()"
 					}
 				},
+				"followers": {
+					".read": true,
+					".write": "auth != null"
+				},
+				"followings": {
+					".read": true,
+					".write": "auth != null"
+				},
 				"tokens": {
 					".read": "auth != null",
 					".write": "auth != null"
