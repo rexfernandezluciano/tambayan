@@ -16,6 +16,10 @@ body {
 	-ms-text-size-adjust: 100%;
 }
 
+.bg-blue-600 {
+	background: #1975D3;
+}
+
 input {
 	outline: none;
 }

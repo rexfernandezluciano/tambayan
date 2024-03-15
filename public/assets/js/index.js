@@ -602,7 +602,8 @@ function createRipple(event) {
               </button>
 							<div class="flex items-center justify-start rtl:justify-end">
 								<a href="/" class="flex md:me-24">
-									<span class="self-center text-xl font-semibold madimi-one-regular sm:text-2xl whitespace-nowrap text-blue-600">tambayan</span>
+								  <img src="/assets/img/barkada.png" class="w-10 h-10 "/>
+									<span class="hidden self-center text-xl font-semibold madimi-one-regular sm:text-2xl whitespace-nowrap text-blue-600">tambayan</span>
 								</a>
 							</div>
 							<div class="flex items-center">
@@ -1108,7 +1109,7 @@ function createRipple(event) {
 						<div class="flex items-center justify-between">
 						<div class="sm:hidden"></div>
 							<div class="flex items-center justify-center sm:justify-start sm:items-start rtl:justify-end">
-								<span class="flex md:me-24 text-xl font-semibold sm:text-2xl madimi-one-regular whitespace-nowrap text-blue-600">tambayan</span>
+							  <img src="/assets/img/barkada.png" class="w-10 h-10"/>
 							</div>
 							<div class="flex items-center">
 								<div class="flex items-center ms-3">
@@ -1124,21 +1125,37 @@ function createRipple(event) {
 				  <div class="sm:flex sm:items-start sm:justify-start">
 				   <div class="mt-14 sm:w-96">
 				      <p class="text-xs font-bold text-gray-600 dark:text-white">A SOCIAL COMMUNITY NETWORK</p>
-				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">More Fun with Barkada's.</p>
+				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">More Fun with Tambayan.</p>
 				      <p class="text-gray-500 text-sm dark:text-gray-400">Even if you\'re a 90's kid, you can join with us. Age is just a number. Tambayan is a new generation.</p>
-				      <button class="dark:text-gray-300 px-4 py-1.5 rounded-xl dark:hover:bg-gray-800 hover:bg-gray-300 border border-gray-300 dark:border-gray-800 mt-3" onclick="window.location.href = '/beta/signup'">Get early access</button>
+				      <button class="beta-page text-white px-4 py-1.5 rounded-xl dark:hover:bg-blue-500 hover:bg-gray-300 bg-blue-600 mt-3">Get early access</button>
 				      <p class="text-gray-500 text-sm dark:text-gray-400 mt-3">Alreay have an account? <a href="/auth/login" class="text-blue-600 font-semibold hover:text-blue-400">Sign in here</a>.</p>
 				    </div>
 				    <div class="hidden flex items-end justify-end sm:block mt-14">
-				      <img src="/assets/img/friends.png" class="self-end ms-14 w-72" />
+				      <img src="/assets/img/barkada.png" class="self-end ms-14 w-72" />
 				    </div>
 				  </div>
 				  <div class="text-center dark:text-white mt-36">
+				    <div class="flex items-center justify-center">
+				      <ul class="text-xs flex items-center justify-center">
+				        <li><a href="/privacy-policy" class="dark:text-gray-300 hover:text-blue-600">Privacy Policy</a></li>
+				        <li class="mx-3 dark:text-gray-300">&bull;</li>
+				        <li><a href="/terms-of-service" class="dark:text-gray-300 hover:text-blue-600">Terms of Service</a></li>
+				      </ul>
+				    </div>
 				    <span class="text-xs dark:text-gray-400">&copy; 2024 Tambayan. All Rights Reserved.</span>
 				  </div>
 				</div>
 			</section>`
 		)));
+		
+		$('.beta-page').click(() => {
+			changePath('/beta/signup');
+			renderBetaPage();
+			$(window).on('popstate', function (event) {
+				changePath('/');
+				renderWelcomePage();
+			});
+		})
 	}
 
 	function renderBetaPage() {
@@ -1149,7 +1166,7 @@ function createRipple(event) {
 						<div class="flex items-center justify-between">
 						<div class="sm:hidden"></div>
 							<div class="flex items-center justify-center sm:justify-start sm:items-start rtl:justify-end">
-								<span class="flex md:me-24 text-xl font-semibold sm:text-2xl madimi-one-regular whitespace-nowrap text-blue-600">tambayan</span>
+								<img src="/assets/img/barkada.png" class="w-10 h-10"/>
 							</div>
 							<div class="flex items-center">
 								<div class="flex items-center ms-3">
@@ -1165,11 +1182,11 @@ function createRipple(event) {
 				  <div class="sm:flex sm:items-start sm:justify-start">
 				   <div class="mt-14 sm:w-96">
 				      <p class="text-xs font-bold text-gray-600 dark:text-white">JOIN TO BETA</p>
-				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">Early access to Tambayan.</p>
+				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">An early access to Tambayan.</p>
 				      <p class="text-gray-500 text-sm dark:text-gray-400">Get your access to beta before everyone else. Because beta is the first before it\'s release to the public.</p>
 				      <div class="mt-3 border border-gray-300 dark:border-gray-800 flex items-start justify-start rounded-xl">
 				        <input type="email" class="beta-email bg-transparent focus:ring-0 ps-3 py-1.5 border-0 dark:text-white w-full" placeholder="Your email" />
-				        <button class="beta-signup dark:text-gray-300 px-4 py-1.5 rounded-e-xl bg-blue-600 dark:hover:bg-gray-800 hover:bg-gray-300 border-s border-gray-300 dark:border-gray-800">Register</button>
+				        <button class="beta-signup text-white px-4 py-1.5 rounded-e-xl bg-blue-600 hover:bg-blue-500">Register</button>
 				      </div>
 				      <p class="text-gray-500 text-sm dark:text-gray-400 mt-3">Alreay have an account? <a href="/auth/login" class="text-blue-600 font-semibold hover:text-blue-400">Sign in here</a>.</p>
 				    </div>
@@ -1178,6 +1195,14 @@ function createRipple(event) {
 				    </div>
 				  </div>
 				  <div class="text-center dark:text-white mt-36">
+				    <div class="text-center dark:text-white mt-36">
+				    <div class="flex items-center justify-center">
+				      <ul class="text-xs flex items-center justify-center">
+				        <li><a href="/privacy-policy" class="dark:text-gray-300 hover:text-blue-600">Privacy Policy</a></li>
+				        <li class="mx-3 dark:text-gray-300">&bull;</li>
+				        <li><a href="/terms-of-service" class="dark:text-gray-300 hover:text-blue-600">Terms of Service</a></li>
+				      </ul>
+				    </div>
 				    <span class="text-xs dark:text-gray-400">&copy; 2024 Tambayan. All Rights Reserved.</span>
 				  </div>
 				</div>
@@ -1379,6 +1404,386 @@ function createRipple(event) {
 			changePath('/');
 			renderHomePage();
 		});
+	}
+
+	function renderPrivacyPolicyPage() {
+		$('main').html($($.parseHTML(
+			`<section class="privacy-policy-layout max-h-screen from-slate-50 dark:bg-gray-900">
+				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900">
+					<div class="sm:mx-32 px-3 sm:px-0 py-3 lg:px-5 lg:pl-3">
+						<div class="flex items-center justify-between">
+							<div class="sm:hidden"></div>
+							<div class="flex items-center justify-center sm:justify-start sm:items-start rtl:justify-end">
+								<img src="/assets/img/barkada.png" class="w-10 h-10" />
+							</div>
+							<div class="flex items-center">
+								<div class="flex items-center ms-3">
+									<div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nav>
+
+				<div class="animate__animated animate__fadeIn px-4 pb-4 sm:px-32 dark:text-white p-4 pt-4 px-0 sm:pb-0">
+					<h1 class="text-3xl font-bold">Privacy Policy</h1>
+					<p>Last updated: March 14, 2024</p>
+					<p class="mt-3">This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.</p>
+					<p class="mt-3">We use Your Personal data to provide and improve the Service. By using the Service, You agree to the collection and use of information in accordance with this Privacy Policy.</p>
+					<h2 class="mt-3 text-2xl font-bold">Interpretation and Definitions</h2>
+					<h3 class="mt-3 text-xl font-bold">Interpretation</h3>
+					<p class="mt-3">The words of which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.</p>
+					<h3 class="mt-3 text-2xl font-bold">Definitions</h3>
+					<p class="mt-3">For the purposes of this Privacy Policy:</p>
+					<ul class="mt-3">
+						<li>
+							<p class="ms-16 mt-3"><strong>Account</strong> means a unique account created for You to access our Service or parts of our Service.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Affiliate</strong> means an entity that controls, is controlled by or is under common control with a party, where &quot;control&quot; means ownership of 50% or more of the shares, equity interest or other securities entitled to vote for election of directors or other managing authority.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Application</strong> refers to Tambayan, the software program provided by the Company.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Company</strong> (referred to as either &quot;the Company&quot;, &quot;We&quot;, &quot;Us&quot; or &quot;Our&quot; in this Agreement) refers to Tambayan, Inc., General Tinio, Nueva Ecija.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Cookies</strong> are small files that are placed on Your computer, mobile device or any other device by a website, containing the details of Your browsing history on that website among its many uses.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Country</strong> refers to:  Philippines</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Device</strong> means any device that can access the Service such as a computer, a cellphone or a digital tablet.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Personal Data</strong> is any information that relates to an identified or identifiable individual.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Service</strong> refers to the Application or the Website or both.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Service Provider</strong> means any natural or legal person who processes the data on behalf of the Company. It refers to third-party companies or individuals employed by the Company to facilitate the Service, to provide the Service on behalf of the Company, to perform services related to the Service or to assist the Company in analyzing how the Service is used.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Third-party Social Media Service</strong> refers to any website or any social network website through which a User can log in or create an account to use the Service.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Usage Data</strong> refers to data collected automatically, either generated by the use of the Service or from the Service infrastructure itself (for example, the duration of a page visit).</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Website</strong> refers to Tambayan, accessible from <a href="https://itstambayan.web.app" rel="external nofollow noopener" target="_blank">https://itstambayan.web.app</a></p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>You</strong> means the individual accessing or using the Service, or the company, or other legal entity on behalf of which such individual is accessing or using the Service, as applicable.</p>
+						</li>
+					</ul>
+					<h2 class="mt-3 text-2xl font-bold">Collecting and Using Your Personal Data</h2>
+					<h3 class="mt-3 text-xl font-bold">Types of Data Collected</h3>
+					<h4 class="mt-3 text-lg font-bold">Personal Data</h4>
+					<p class="mt-3">While using Our Service, We may ask You to provide Us with certain personally identifiable information that can be used to contact or identify You. Personally identifiable information may include, but is not limited to:</p>
+					<ul>
+						<li>
+							<p class="ms-16 mt-3">Email address</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3">First name and last name</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3">Phone number</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3">Address, State, Province, ZIP/Postal code, City</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3">Usage Data</p>
+						</li>
+					</ul>
+					<h4 class="mt-3 text-lg font-bold">Usage Data</h4>
+					<p class="mt-3">Usage Data is collected automatically when using the Service.</p>
+					<p class="mt-3">Usage Data may include information such as Your Device's Internet Protocol address (e.g. IP address), browser type, browser version, the pages of our Service that You visit, the time and date of Your visit, the time spent on those pages, unique device identifiers and other diagnostic data.</p>
+					<p class="mt-3">When You access the Service by or through a mobile device, We may collect certain information automatically, including, but not limited to, the type of mobile device You use, Your mobile device unique ID, the IP address of Your mobile device, Your mobile operating system, the type of mobile Internet browser You use, unique device identifiers and other diagnostic data.</p>
+					<p class="mt-3">We may also collect information that Your browser sends whenever You visit our Service or when You access the Service by or through a mobile device.</p>
+					<h4 class="mt-3 text-lg font-bold">Information from Third-Party Social Media Services</h4>
+					<p class="mt-3">The Company allows You to create an account and log in to use the Service through the following Third-party Social Media Services:</p>
+					<ul>
+						<li class="ms-16 mt-3">Google</li>
+						<li class="ms-16 mt-3">Facebook</li>
+						<li class="ms-16 mt-3">Instagram</li>
+						<li class="ms-16 mt-3">Twitter</li>
+						<li class="ms-16 mt-3">LinkedIn</li>
+					</ul>
+					<p class="mt-3">If You decide to register through or otherwise grant us access to a Third-Party Social Media Service, We may collect Personal data that is already associated with Your Third-Party Social Media Service's account, such as Your name, Your email address, Your activities or Your contact list associated with that account.</p>
+					<p class="mt-3">You may also have the option of sharing additional information with the Company through Your Third-Party Social Media Service's account. If You choose to provide such information and Personal Data, during registration or otherwise, You are giving the Company permission to use, share, and store it in a manner consistent with this Privacy Policy.</p>
+					<h4 class="mt-3 text-lg font-bold">Information Collected while Using the Application</h4>
+					<p class="mt-3">While using Our Application, in order to provide features of Our Application, We may collect, with Your prior permission:</p>
+					<ul>
+						<li>
+							<p class="ms-16 mt-3">Information regarding your location</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3">Pictures and other information from your Device's camera and photo library</p>
+						</li>
+					</ul>
+					<p class="mt-3">We use this information to provide features of Our Service, to improve and customize Our Service. The information may be uploaded to the Company's servers and/or a Service Provider's server or it may be simply stored on Your device.</p>
+					<p class="mt-3">You can enable or disable access to this information at any time, through Your Device settings.</p>
+					<h4 class="mt-3 text-lg font-bold">Tracking Technologies and Cookies</h4>
+					<p class=">We use Cookies and similar tracking technologies to track the activity on Our Service and store certain information. Tracking technologies used are beacons, tags, and scripts to collect and track information and to improve and analyze Our Service. The technologies We use may include:</p>
+					<ul>
+						<li class="ms-16 mt-3"><strong>Cookies or Browser Cookies.</strong> A cookie is a small file placed on Your Device. You can instruct Your browser to refuse all Cookies or to indicate when a Cookie is being sent. However, if You do not accept Cookies, You may not be able to use some parts of our Service. Unless you have adjusted Your browser setting so that it will refuse Cookies, our Service may use Cookies.</li>
+						<li class="ms-16 mt-3"><strong>Web Beacons.</strong> Certain sections of our Service and our emails may contain small electronic files known as web beacons (also referred to as clear gifs, pixel tags, and single-pixel gifs) that permit the Company, for example, to count users who have visited those pages or opened an email and for other related website statistics (for example, recording the popularity of a certain section and verifying system and server integrity).</li>
+					</ul>
+					<p class="mt-3">Cookies can be &quot;Persistent&quot; or &quot;Session&quot; Cookies. Persistent Cookies remain on Your personal computer or mobile device when You go offline, while Session Cookies are deleted as soon as You close Your web browser. Learn more about cookies on the <a href="https://www.freeprivacypolicy.com/blog/sample-privacy-policy-template/#Use_Of_Cookies_And_Tracking" target="_blank">Free Privacy Policy website</a> article.</p>
+					<p class="mt-3">We use both Session and Persistent Cookies for the purposes set out below:</p>
+					<ul>
+						<li>
+							<p class="ms-16 mt-3"><strong>Necessary / Essential Cookies</strong></p>
+							<p class="ms-16 mt-3">Type: Session Cookies</p>
+							<p class="ms-16 mt-3">Administered by: Us</p>
+							<p class="ms-16 mt-3">Purpose: These Cookies are essential to provide You with services available through the Website and to enable You to use some of its features. They help to authenticate users and prevent fraudulent use of user accounts. Without these Cookies, the services that You have asked for cannot be provided, and We only use these Cookies to provide You with those services.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Cookies Policy / Notice Acceptance Cookies</strong></p>
+							<p class="ms-16 mt-3">Type: Persistent Cookies</p>
+							<p class="ms-16 mt-3">Administered by: Us</p>
+							<p class="ms-16 mt-3">Purpose: These Cookies identify if users have accepted the use of cookies on the Website.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>Functionality Cookies</strong></p>
+							<p class="ms-16 mt-3">Type: Persistent Cookies</p>
+							<p class="ms-16 mt-3">Administered by: Us</p>
+							<p class="ms-16 mt-3">Purpose: These Cookies allow us to remember choices You make when You use the Website, such as remembering your login details or language preference. The purpose of these Cookies is to provide You with a more personal experience and to avoid You having to re-enter your preferences every time You use the Website.</p>
+						</li>
+					</ul>
+					<p class="mt-3">For more information about the cookies we use and your choices regarding cookies, please visit our Cookies Policy or the Cookies section of our Privacy Policy.</p>
+					<h3 class="mt-3 text-xl font-bold">Use of Your Personal Data</h3>
+					<p class="mt-3">The Company may use Personal Data for the following purposes:</p>
+					<ul>
+						<li>
+							<p class="ms-16 mt-3"><strong>To provide and maintain our Service</strong>, including to monitor the usage of our Service.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>To manage Your Account:</strong> to manage Your registration as a user of the Service. The Personal Data You provide can give You access to different functionalities of the Service that are available to You as a registered user.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>For the performance of a contract:</strong> the development, compliance and undertaking of the purchase contract for the products, items or services You have purchased or of any other contract with Us through the Service.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>To contact You:</strong> To contact You by email, telephone calls, SMS, or other equivalent forms of electronic communication, such as a mobile application's push notifications regarding updates or informative communications related to the functionalities, products or contracted services, including the security updates, when necessary or reasonable for their implementation.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>To provide You</strong> with news, special offers and general information about other goods, services and events which we offer that are similar to those that you have already purchased or enquired about unless You have opted not to receive such information.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>To manage Your requests:</strong> To attend and manage Your requests to Us.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>For business transfers:</strong> We may use Your information to evaluate or conduct a merger, divestiture, restructuring, reorganization, dissolution, or other sale or transfer of some or all of Our assets, whether as a going concern or as part of bankruptcy, liquidation, or similar proceeding, in which Personal Data held by Us about our Service users is among the assets transferred.</p>
+						</li>
+						<li>
+							<p class="ms-16 mt-3"><strong>For other purposes</strong>: We may use Your information for other purposes, such as data analysis, identifying usage trends, determining the effectiveness of our promotional campaigns and to evaluate and improve our Service, products, services, marketing and your experience.</p>
+						</li>
+					</ul>
+					<p class="mt-3">We may share Your personal information in the following situations:</p>
+					<ul>
+						<li class="ms-16 mt-3"><strong>With Service Providers:</strong> We may share Your personal information with Service Providers to monitor and analyze the use of our Service,  to contact You.</li>
+						<li class="ms-16 mt-3"><strong>For business transfers:</strong> We may share or transfer Your personal information in connection with, or during negotiations of, any merger, sale of Company assets, financing, or acquisition of all or a portion of Our business to another company.</li>
+						<li class="ms-16 mt-3"><strong>With Affiliates:</strong> We may share Your information with Our affiliates, in which case we will require those affiliates to honor this Privacy Policy. Affiliates include Our parent company and any other subsidiaries, joint venture partners or other companies that We control or that are under common control with Us.</li>
+						<li class="ms-16 mt-3"><strong>With business partners:</strong> We may share Your information with Our business partners to offer You certain products, services or promotions.</li>
+						<li class="ms-16 mt-3"><strong>With other users:</strong> when You share personal information or otherwise interact in the public areas with other users, such information may be viewed by all users and may be publicly distributed outside. If You interact with other users or register through a Third-Party Social Media Service, Your contacts on the Third-Party Social Media Service may see Your name, profile, pictures and description of Your activity. Similarly, other users will be able to view descriptions of Your activity, communicate with You and view Your profile.</li>
+						<li class="ms-16 mt-3"><strong>With Your consent</strong>: We may disclose Your personal information for any other purpose with Your consent.</li>
+					</ul>
+					<h3 class="mt-3 text-xl font-bold">Retention of Your Personal Data</h3>
+					<p class="mt-3">The Company will retain Your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use Your Personal Data to the extent necessary to comply with our legal obligations (for example, if we are required to retain your data to comply with applicable laws), resolve disputes, and enforce our legal agreements and policies.</p>
+					<p class="mt-3">The Company will also retain Usage Data for internal analysis purposes. Usage Data is generally retained for a shorter period of time, except when this data is used to strengthen the security or to improve the functionality of Our Service, or We are legally obligated to retain this data for longer time periods.</p>
+					<h3 class="mt-3 text-xl font-bold">Transfer of Your Personal Data</h3>
+					<p class="mt-3">Your information, including Personal Data, is processed at the Company's operating offices and in any other places where the parties involved in the processing are located. It means that this information may be transferred to — and maintained on — computers located outside of Your state, province, country or other governmental jurisdiction where the data protection laws may differ than those from Your jurisdiction.</p>
+					<p class="mt-3">Your consent to this Privacy Policy followed by Your submission of such information represents Your agreement to that transfer.</p>
+					<p class="mt-3">The Company will take all steps reasonably necessary to ensure that Your data is treated securely and in accordance with this Privacy Policy and no transfer of Your Personal Data will take place to an organization or a country unless there are adequate controls in place including the security of Your data and other personal information.</p>
+					<h3 class="mt-3 text-xl font-bold">Delete Your Personal Data</h3>
+					<p class="mt-3">You have the right to delete or request that We assist in deleting the Personal Data that We have collected about You.</p>
+					<p class="mt-3">Our Service may give You the ability to delete certain information about You from within the Service.</p>
+					<p class="mt-3">You may update, amend, or delete Your information at any time by signing in to Your Account, if you have one, and visiting the account settings section that allows you to manage Your personal information. You may also contact Us to request access to, correct, or delete any personal information that You have provided to Us.</p>
+					<p class="mt-3">Please note, however, that We may need to retain certain information when we have a legal obligation or lawful basis to do so.</p>
+					<h3 class="mt-3 text-xl font-bold">Disclosure of Your Personal Data</h3>
+					<h4 class="mt-3 text-lg font-bold">Business Transactions</h4>
+					<p class="mt-3">If the Company is involved in a merger, acquisition or asset sale, Your Personal Data may be transferred. We will provide notice before Your Personal Data is transferred and becomes subject to a different Privacy Policy.</p>
+					<h4 class="mt-3 text-lg font-bold">Law enforcement</h4>
+					<p class="mt-3">Under certain circumstances, the Company may be required to disclose Your Personal Data if required to do so by law or in response to valid requests by public authorities (e.g. a court or a government agency).</p>
+					<h4 class="mt-3 text-lg font-bold">Other legal requirements</h4>
+					<p class="mt-3">The Company may disclose Your Personal Data in the good faith belief that such action is necessary to:</p>
+					<ul>
+						<li class="ms-16 mt-3">Comply with a legal obligation</li>
+						<li class="ms-16 mt-3">Protect and defend the rights or property of the Company</li>
+						<li class="ms-16 mt-3">Prevent or investigate possible wrongdoing in connection with the Service</li>
+						<li class="ms-16 mt-3">Protect the personal safety of Users of the Service or the public</li>
+						<li class="ms-16 mt-3">Protect against legal liability</li>
+					</ul>
+					<h3 class="mt-3 text-xl font-bold">Security of Your Personal Data</h3>
+					<p class="mt-3">The security of Your Personal Data is important to Us, but remember that no method of transmission over the Internet, or method of electronic storage is 100% secure. While We strive to use commercially acceptable means to protect Your Personal Data, We cannot guarantee its absolute security.</p>
+					<h2 class="mt-3 text-2xl font-bold">Children's Privacy</h2>
+					<p class="mt-3">Our Service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from anyone under the age of 13. If You are a parent or guardian and You are aware that Your child has provided Us with Personal Data, please contact Us. If We become aware that We have collected Personal Data from anyone under the age of 13 without verification of parental consent, We take steps to remove that information from Our servers.</p>
+					<p class="mt-3">If We need to rely on consent as a legal basis for processing Your information and Your country requires consent from a parent, We may require Your parent's consent before We collect and use that information.</p>
+					<h2 class="mt-3 text-2xl font-bold">Links to Other Websites</h2>
+					<p class="mt-3">Our Service may contain links to other websites that are not operated by Us. If You click on a third party link, You will be directed to that third party's site. We strongly advise You to review the Privacy Policy of every site You visit.</p>
+					<p class="mt-3">We have no control over and assume no responsibility for the content, privacy policies or practices of any third party sites or services.</p>
+					<h2 class="mt-3 text-2xl font-bold">Changes to this Privacy Policy</h2>
+					<p class="mt-3">We may update Our Privacy Policy from time to time. We will notify You of any changes by posting the new Privacy Policy on this page.</p>
+					<p class="mt-3">We will let You know via email and/or a prominent notice on Our Service, prior to the change becoming effective and update the &quot;Last updated&quot; date at the top of this Privacy Policy.</p>
+					<p class="mt-3">You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.</p>
+					<h2 class="mt-3 text-2xl font-bold">Contact Us</h2>
+					<p class="mt-3">If you have any questions about this Privacy Policy, You can contact us:</p>
+					<ul class="pb-4">
+						<li class="ms-16 mt-3">By visiting this page on our website: <a href="https://itstambayan.web.app/help" rel="external nofollow noopener" target="_blank">https://itstambayan.web.app/help</a></li>
+					</ul>
+				</div>
+			</section>`
+		)));
+	}
+
+	function renderTermsOfServicePage() {
+		$('main').html($($.parseHTML(
+		 `<section class="terms-of-service-layout max-h-screen from-slate-50 dark:bg-gray-900">
+				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900">
+					<div class="sm:mx-32 px-3 sm:px-0 py-3 lg:px-5 lg:pl-3">
+						<div class="flex items-center justify-between">
+							<div class="sm:hidden"></div>
+							<div class="flex items-center justify-center sm:justify-start sm:items-start rtl:justify-end">
+								<img src="/assets/img/barkada.png" class="w-10 h-10" />
+							</div>
+							<div class="flex items-center">
+								<div class="flex items-center ms-3">
+									<div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nav>
+
+				<div class="animate__animated animate__fadeIn px-4 pb-4 sm:px-32 dark:text-white p-4 pt-4 px-0 sm:pb-0">
+					<h2 class="text-2xl font-bold"><strong>Terms and Conditions</strong></h2>
+
+					<p class="mt-3">Welcome to Tambayan!</p>
+
+					<p class="mt-3">These terms and conditions outline the rules and regulations for the use of Tambayan, Inc.'s Website, located at https://itstambayan.web.app.</p>
+
+					<p class="mt-3">By accessing this website we assume you accept these terms and conditions. Do not continue to use Tambayan if you do not agree to take all of the terms and conditions stated on this page.</p>
+
+					<p class="mt-3">The following terminology applies to these Terms and Conditions, Privacy Statement and Disclaimer Notice and all Agreements: "Client", "You" and "Your" refers to you, the person log on this website and compliant to the Company's terms and conditions. "The Company", "Ourselves", "We", "Our" and "Us", refers to our Company. "Party", "Parties", or "Us", refers to both the Client and ourselves. All terms refer to the offer, acceptance and consideration of payment necessary to undertake the process of our assistance to the Client in the most appropriate manner for the express purpose of meeting the Client's needs in respect of provision of the Company's stated services, in accordance with and subject to, prevailing law of ph. Any use of the above terminology or other words in the singular, plural, capitalization and/or he/she or they, are taken as interchangeable and therefore as referring to same.</p>
+
+					<h3 class="mt-3 text-xl font-bold"><strong>Cookies</strong></h3>
+
+					<p class="mt-3">We employ the use of cookies. By accessing Tambayan, you agreed to use cookies in agreement with the Tambayan, Inc.'s Privacy Policy. </p>
+
+					<p class="mt-3">Most interactive websites use cookies to let us retrieve the user's details for each visit. Cookies are used by our website to enable the functionality of certain areas to make it easier for people visiting our website. Some of our affiliate/advertising partners may also use cookies.</p>
+
+					<h3 class="mt-3 text-xl font-bold"><strong>License</strong></h3>
+
+					<p class="mt-3">Unless otherwise stated, Tambayan, Inc. and/or its licensors own the intellectual property rights for all material on Tambayan. All intellectual property rights are reserved. You may access this from Tambayan for your own personal use subjected to restrictions set in these terms and conditions.</p>
+
+					<p class="mt-3">You must not:</p>
+					<ul>
+						<li class="ms-16 mt-3">Republish material from Tambayan</li>
+						<li class="ms-16 mt-3">Sell, rent or sub-license material from Tambayan</li>
+						<li class="ms-16 mt-3">Reproduce, duplicate or copy material from Tambayan</li>
+						<li class="ms-16 mt-3">Redistribute content from Tambayan</li>
+					</ul>
+
+					<p class="mt-3">Parts of this website offer an opportunity for users to post and exchange opinions and information in certain areas of the website. Tambayan, Inc. does not filter, edit, publish or review Comments prior to their presence on the website. Comments do not reflect the views and opinions of Tambayan, Inc.,its agents and/or affiliates. Comments reflect the views and opinions of the person who post their views and opinions. To the extent permitted by applicable laws, Tambayan, Inc. shall not be liable for the Comments or for any liability, damages or expenses caused and/or suffered as a result of any use of and/or posting of and/or appearance of the Comments on this website.</p>
+
+					<p class="mt-3">Tambayan, Inc. reserves the right to monitor all Comments and to remove any Comments which can be considered inappropriate, offensive or causes breach of these Terms and Conditions.</p>
+
+					<p class="mt-3">You warrant and represent that:</p>
+
+					<ul>
+						<li class="ms-16 mt-3">You are entitled to post the Comments on our website and have all necessary licenses and consents to do so;</li>
+						<li class="ms-16 mt-3">The Comments do not invade any intellectual property right, including without limitation copyright, patent or trademark of any third party;</li>
+						<li class="ms-16 mt-3">The Comments do not contain any defamatory, libelous, offensive, indecent or otherwise unlawful material which is an invasion of privacy</li>
+						<li class="ms-16 mt-3">The Comments will not be used to solicit or promote business or custom or present commercial activities or unlawful activity.</li>
+					</ul>
+
+					<p class="mt-3">You hereby grant Tambayan, Inc. a non-exclusive license to use, reproduce, edit and authorize others to use, reproduce and edit any of your Comments in any and all forms, formats or media.</p>
+
+					<h3 class="mt-3 text-xl font-bold"><strong>Hyperlinking to our Content</strong></h3>
+
+					<p class="mt-3">The following organizations may link to our Website without prior written approval:</p>
+
+					<ul>
+						<li class="ms-16 mt-3">Government agencies;</li>
+						<li class="ms-16 mt-3">Search engines;</li>
+						<li class="ms-16 mt-3">News organizations;</li>
+						<li class="ms-16 mt-3">Online directory distributors may link to our Website in the same manner as they hyperlink to the Websites of other listed businesses; and</li>
+						<li class="ms-16 mt-3">System wide Accredited Businesses except soliciting non-profit organizations, charity shopping malls, and charity fundraising groups which may not hyperlink to our Web site.</li>
+					</ul>
+
+					<p class="mt-3">These organizations may link to our home page, to publications or to other Website information so long as the link: (a) is not in any way deceptive; (b) does not falsely imply sponsorship, endorsement or approval of the linking party and its products and/or services; and (c) fits within the context of the linking party's site.</p>
+
+					<p class="mt-3">We may consider and approve other link requests from the following types of organizations:</p>
+
+					<ul>
+						<li class="ms-16 mt-3">commonly-known consumer and/or business information sources;</li>
+						<li class="ms-16 mt-3">dot.com community sites;</li>
+						<li class="ms-16 mt-3">associations or other groups representing charities;</li>
+						<li class="ms-16 mt-3">online directory distributors;</li>
+						<li class="ms-16 mt-3">internet portals;</li>
+						<li class="ms-16 mt-3">accounting, law and consulting firms; and</li>
+						<li class="ms-16 mt-3">educational institutions and trade associations.</li>
+					</ul>
+
+					<p class="mt-3">We will approve link requests from these organizations if we decide that: (a) the link would not make us look unfavorably to ourselves or to our accredited businesses; (b) the organization does not have any negative records with us; (c) the benefit to us from the visibility of the hyperlink compensates the absence of Tambayan, Inc.; and (d) the link is in the context of general resource information.</p>
+
+					<p class="mt-3">These organizations may link to our home page so long as the link: (a) is not in any way deceptive; (b) does not falsely imply sponsorship, endorsement or approval of the linking party and its products or services; and (c) fits within the context of the linking party's site.</p>
+
+					<p class="mt-3">If you are one of the organizations listed in paragraph 2 above and are interested in linking to our website, you must inform us by sending an e-mail to Tambayan, Inc.. Please include your name, your organization name, contact information as well as the URL of your site, a list of any URLs from which you intend to link to our Website, and a list of the URLs on our site to which you would like to link. Wait 2-3 weeks for a response.</p>
+
+					<p class="mt-3">Approved organizations may hyperlink to our Website as follows:</p>
+
+					<ul>
+						<li class="ms-16 mt-3">By use of our corporate name; or</li>
+						<li class="ms-16 mt-3">By use of the uniform resource locator being linked to; or</li>
+						<li class="ms-16 mt-3">By use of any other description of our Website being linked to that makes sense within the context and format of content on the linking party's site.</li>
+					</ul>
+
+					<p class="mt-3">No use of Tambayan, Inc.'s logo or other artwork will be allowed for linking absent a trademark license agreement.</p>
+
+					<h3 class="mt-3 text-xl font-bold"><strong>iFrames</strong></h3>
+
+					<p class="mt-3">Without prior approval and written permission, you may not create frames around our Webpages that alter in any way the visual presentation or appearance of our Website.</p>
+
+					<h3 class="mt-3 text-xl font-bold"><strong>Content Liability</strong></h3>
+
+					<p class="mt-3">We shall not be hold responsible for any content that appears on your Website. You agree to protect and defend us against all claims that is rising on your Website. No link(s) should appear on any Website that may be interpreted as libelous, obscene or criminal, or which infringes, otherwise violates, or advocates the infringement or other violation of, any third party rights.</p>
+
+					<h3 class="mt-3 text-xl font-bold"><strong>Reservation of Rights</strong></h3>
+
+					<p class="mt-3">We reserve the right to request that you remove all links or any particular link to our Website. You approve to immediately remove all links to our Website upon request. We also reserve the right to amen these terms and conditions and it's linking policy at any time. By continuously linking to our Website, you agree to be bound to and follow these linking terms and conditions.</p>
+
+					<h3 class="mt-3 text-xl font-bold"><strong>Removal of links from our website</strong></h3>
+
+					<p class="mt-3">If you find any link on our Website that is offensive for any reason, you are free to contact and inform us any moment. We will consider requests to remove links but we are not obligated to or so or to respond to you directly.</p>
+
+					<p class="mt-3">We do not ensure that the information on this website is correct, we do not warrant its completeness or accuracy; nor do we promise to ensure that the website remains available or that the material on the website is kept up to date.</p>
+
+					<h3 class="mt-3 text-xl font-bold"><strong>Disclaimer</strong></h3>
+
+					<p class="mt-3">To the maximum extent permitted by applicable law, we exclude all representations, warranties and conditions relating to our website and the use of this website. Nothing in this disclaimer will:</p>
+
+					<ul>
+						<li class="ms-16 mt-3">limit or exclude our or your liability for death or personal injury;</li>
+						<li class="ms-16 mt-3">limit or exclude our or your liability for fraud or fraudulent misrepresentation;</li>
+						<li class="ms-16 mt-3">limit any of our or your liabilities in any way that is not permitted under applicable law; or</li>
+						<li class="ms-16 mt-3">exclude any of our or your liabilities that may not be excluded under applicable law.</li>
+					</ul>
+
+					<p class="mt-3">The limitations and prohibitions of liability set in this Section and elsewhere in this disclaimer: (a) are subject to the preceding paragraph; and (b) govern all liabilities arising under the disclaimer, including liabilities arising in contract, in tort and for breach of statutory duty.</p>
+
+					<p class="mt-3">As long as the website and the information and services on the website are provided free of charge, we will not be liable for any loss or damage of any nature.</p>
+				</div>
+			</section>`
+		)));
 	}
 
 	function renderLoginPage() {
@@ -1881,6 +2286,14 @@ function createRipple(event) {
 						if (path() === '/beta/signup') {
 							redirect('/');
 						}
+
+						if (path() === '/privacy-policy') {
+							renderPrivacyPolicyPage();
+						}
+
+						if (path() === '/terms-of-service') {
+							renderTermsOfServicePage();
+						}
 					}
 				} else {
 
@@ -1890,6 +2303,14 @@ function createRipple(event) {
 
 					if (path() === '/beta/signup') {
 						renderBetaPage();
+					}
+
+					if (path() === '/privacy-policy') {
+						renderPrivacyPolicyPage();
+					}
+
+					if (path() === '/terms-of-service') {
+						renderTermsOfServicePage();
 					}
 
 					if (path() === '/user/' + getLastPathSegment()) {
@@ -1914,11 +2335,11 @@ function createRipple(event) {
 										<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900 sm:border-b-2 sm:dark:border-gray-800">
 											<div class="px-3 py-3 lg:px-5 lg:pl-3">
 												<div class="flex items-center justify-between">
-													<button aria-controls="sidebar-menu" type="button" class="btn-sidebar inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
+													<button type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
 													</button>
 													<div class="flex items-center justify-start rtl:justify-end">
-														<a href="/" class="flex ms-2 md:me-24">
-															<span class="self-center text-xl font-semibold madimi-one-regular sm:text-2xl whitespace-nowrap text-blue-600">tambayan</span>
+														<a href="/" class="flex md:me-24">
+                              <img src="/assets/img/barkada.png" class="w-10 h-10"/>
 														</a>
 													</div>
 													<div class="flex items-center">

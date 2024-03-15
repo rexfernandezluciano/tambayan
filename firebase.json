@@ -4,6 +4,7 @@
 		"public": "public",
 		"ignore": [
 			"public/.htaccess",
+			"public/access_log",
 			"firebase.json",
 			"**/.*",
 			"**/node_modules/**"
@@ -30,6 +31,14 @@
 			},
 			{
 				"source": "/beta/signup",
+				"destination": "/index.html"
+			},
+			{
+				"source": "/privacy-policy",
+				"destination": "/index.html"
+			},
+			{
+				"source": "/terms-of-service",
 				"destination": "/index.html"
 			}],
 		"headers": [ {
