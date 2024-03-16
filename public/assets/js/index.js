@@ -45,10 +45,10 @@ import { getRemoteConfig, getValue } from "https://www.gstatic.com/firebasejs/10
 import app from './config.js';
 import TDialog from './dialog.js';
 
-const appCheck = initializeAppCheck(app, {
-	provider: new ReCaptchaEnterpriseProvider('6LemV5EpAAAAAEuKX7BK_enKi_Xxn4DgHbfHh5Tl'),
-	isTokenAutoRefreshEnabled: true
-});
+// const appCheck = initializeAppCheck(app, {
+// 	provider: new ReCaptchaEnterpriseProvider('6LemV5EpAAAAAEuKX7BK_enKi_Xxn4DgHbfHh5Tl'),
+// 	isTokenAutoRefreshEnabled: true
+// });
 
 const analytics = getAnalytics(app);
 const messaging = getMessaging(app);
@@ -183,7 +183,7 @@ function convertUTCToLocal(utcTimestamp, targetTimezone) {
 
 function replaceMentions(postContent) {
 	const mentionRegex = /@(\w+)/g;
-	const replacedContent = postContent.replace(mentionRegex, `<a href="/user/$1" class="mention font-bold text-blue-600">$&</a>`);
+	const replacedContent = postContent.replace(mentionRegex, `<a href="/u/$1" class="mention font-bold text-blue-600">$&</a>`);
 	return replacedContent;
 }
 
@@ -277,6 +277,15 @@ function createRipple(event) {
 	button.appendChild(circle);
 }
 
+function getPath() {
+	const parsedUrl = new URL(window.location.href);
+	const url = parsedUrl.pathname;
+	var segments = url.split('/');
+	if (segments.length > 0) {
+		return segments[1];
+	}
+}
+
 (($) => {
 
 	function createUserAccount(user, provider) {
@@ -307,9 +316,9 @@ function createRipple(event) {
 				gender: 10
 			},
 			birthday: {
-				day: date.getDay(),
-				month: date.getMonth(),
-				year: date.getYear()
+				day: (date.getDay() + 1),
+				month: (date.getMonth() + 1),
+				year: date.getFullYear()
 			},
 			privacy: {
 				bio: 'everyone',
@@ -407,9 +416,9 @@ function createRipple(event) {
 									<i class="text-xl fa-sharp ${posts.likes ? posts.likes[auth.currentUser.uid] === true ? 'fa-solid text-blue-600' : 'fa-regular' : 'fa-regular'} fa-heart w-6 animate__animated" id="btn-like-icon-${posts.postKey}"></i>
 									<span class="h-6 ms-1" id="btn-like-count-${posts.postKey}">${posts.likeCount ? formatNumber(posts.likeCount) : '0'}</span>
 								</button>
-								<button type="button" class="w-full flex items-center justify-center group">
+								<button type="button" class="btn-comment-${posts.postKey} w-full flex items-center justify-center group">
 									<i class="text-xl fa-sharp fa-regular fa-comment w-6"></i>
-									<span class="h-6 ms-1">0</span>
+									<span class="comment-count-${posts.postKey} h-6 ms-1">0</span>
 								</button>
 								<button type="button" class="w-full flex items-center justify-center group">
 									<i class="text-xl fa-sharp fa-regular fa-share-from-square w-6"></i>
@@ -922,12 +931,21 @@ function createRipple(event) {
 
 					$('.post-list').prepend(posts(post, user)).fadeIn();
 					$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
+
 					$(`#btn-options-${post.postKey}`).click(() => {
 						$(`#dropdown-${post.postKey}`).toggle('hidden');
 					});
 
+					$(`.comment-count-${post.postKey}`).html(post.comments ? formatNumber(Object.keys(post.comments).length) : '0');
+
+					$(`.btn-comment-${post.postKey}`).click(() => {
+						changePath(`/p/${post.postKey}`);
+						renderPostCommentPage();
+					});
+
 					$(`#${post.postKey}`).on('click', 'a', (e) => {
 						e.preventDefault();
+						const url = $(this).attr('href');
 						//
 					});
 
@@ -969,7 +987,7 @@ function createRipple(event) {
 				))).fadeIn();
 
 				$(`#people-${user.uid}`).click(() => {
-					changePath(`/user/${user.username}`);
+					changePath(`/u/${user.username}`);
 					renderProfilePage();
 				});
 
@@ -988,8 +1006,9 @@ function createRipple(event) {
 				))).fadeIn();
 
 				$(`#search-${user.uid}`).click(() => {
-					changePath(`/user/${user.username}`);
+					changePath(`/u/${user.username}`);
 					renderProfilePage();
+					scrollTop();
 				});
 			}
 
@@ -1026,8 +1045,9 @@ function createRipple(event) {
 				}
 
 				$('.btn-profile').click(() => {
-					changePath(`/user/${data.username}`);
+					changePath(`/u/${data.username}`);
 					renderProfilePage();
+					scrollTop();
 				})
 			});
 
@@ -1102,6 +1122,7 @@ function createRipple(event) {
 	}
 
 	function renderWelcomePage() {
+		$('title').html('Welcome to Tambayan');
 		$('main').html($($.parseHTML(
 			`<section class="welcome-layout max-h-screen from-slate-50 dark:bg-gray-900">
 				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900">
@@ -1125,8 +1146,8 @@ function createRipple(event) {
 				  <div class="sm:flex sm:items-start sm:justify-start">
 				   <div class="mt-14 sm:w-96">
 				      <p class="text-xs font-bold text-gray-600 dark:text-white">A SOCIAL COMMUNITY NETWORK</p>
-				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">More Fun with Tambayan.</p>
-				      <p class="text-gray-500 text-sm dark:text-gray-400">Even if you\'re a 90's kid, you can join with us. Age is just a number. Tambayan is a new generation.</p>
+				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">Welcome to Tambayan</p>
+				      <p class="text-gray-500 text-sm dark:text-gray-400">Connect, chat, post, and chill with friends. Join rooms, start conversations, and have fun! 🎉</p>
 				      <button class="beta-page text-white px-4 py-1.5 rounded-xl dark:hover:bg-blue-500 hover:bg-gray-300 bg-blue-600 mt-3">Get early access</button>
 				      <p class="text-gray-500 text-sm dark:text-gray-400 mt-3">Alreay have an account? <a href="/auth/login" class="text-blue-600 font-semibold hover:text-blue-400">Sign in here</a>.</p>
 				    </div>
@@ -1147,7 +1168,7 @@ function createRipple(event) {
 				</div>
 			</section>`
 		)));
-		
+
 		$('.beta-page').click(() => {
 			changePath('/beta/signup');
 			renderBetaPage();
@@ -1159,6 +1180,7 @@ function createRipple(event) {
 	}
 
 	function renderBetaPage() {
+		$('title').html('Beta Access - Tambayan');
 		$('main').html($($.parseHTML(
 			`<section class="beta-layout max-h-screen from-slate-50 dark:bg-gray-900">
 				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900">
@@ -1269,7 +1291,8 @@ function createRipple(event) {
 				</div>
 			</section>`)));
 
-		get(query(ref(database, 'users'), orderByChild('username'), equalTo(getLastPathSegment())))
+		const username = getLastPathSegment();
+		get(query(ref(database, 'users', limitToFirst(1)), orderByChild('username'), equalTo(username)))
 			.then((snapshot) => {
 				if (snapshot.exists()) {
 					const data = snapshot.val();
@@ -1336,13 +1359,21 @@ function createRipple(event) {
 
 											$('.user-post-list').prepend(posts(post, user1)).fadeIn();
 											$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
+
 											$(`#btn-options-${post.postKey}`).click(() => {
 												$(`#dropdown-${post.postKey}`).toggle('hidden');
+											});
+
+											$(`.btn-comment-${post.postKey}`).click(() => {
+												changePath(`/p/${post.postKey}`);
+												renderPostCommentPage();
 											});
 
 											$(`#${post.postKey}`).on('click', 'a', (e) => {
 												e.preventDefault();
 											});
+
+											$(`.comment-count-${post.postKey}`).html(post.comments ? formatNumber(Object.keys(post.comments).length) : '0');
 
 											$('.loading-post').remove().fadeOut('slow');
 										}).catch((error) => {
@@ -1386,7 +1417,7 @@ function createRipple(event) {
 						}
 					});
 				} else {
-					$('.profile').html('<p class="mt-32 dark:text-white text-center">User not found.</p>');
+					$('.profile').html('<p class="mt-32 dark:text-white text-center">This profile doesn\'t exist.</p>');
 				}
 			});
 
@@ -1404,6 +1435,162 @@ function createRipple(event) {
 			changePath('/');
 			renderHomePage();
 		});
+	}
+
+	function renderPostCommentPage() {
+		$('title').html('Post - Tambayan');
+		$('main').html($($.parseHTML(
+			`<section class="comment-post-layout max-h-screen from-slate-50 dark:bg-gray-900">
+				<nav class="navbar fixed top-0 z-50 w-full bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm border-b border-gray-300 dark:border-gray-800 sm:dark:border-gray-800">
+					<div class="sm:mx-32 px-3 py-3 lg:px-5 lg:pl-3">
+						<div class="flex items-center justify-between">
+							<button type="button" class="btn-back inline-flex items-center p-2 text-sm text-gray-600 dark:text-white rounded-lg focus:outline-none">
+								<span class="sr-only">Open sidebar</span>
+								<i id="comment-post-back-btn" class="fa-sharp fa-solid fa-arrow-left-long icons"></i>
+							</button>
+							<div class="flex items-center justify-start rtl:justify-end">
+								<span class="flex md:me-24 text-xl font-semibold sm:text-2xl whitespace-nowrap text-gray-900 dark:text-white">Posts</span>
+							</div>
+							<div class="flex items-center">
+								<div class="flex items-center ms-3">
+									<div>
+										<button type="button" class="flex text-sm">
+											<span class="sr-only">Open options</span>
+											<i class="fa-sharp fa-solid fa-magnifying-glass text-gray-600 dark:text-white text-lg"></i>
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nav>
+				
+				<div class="comment-post relative mt-10 animate__animated animate__fadeIn p-4 pt-4 px-0 sm:pb-0">
+				 <div class="sm:px-20 comment-post-holder"></div>
+				  <div class="w-full max-h-screen flex items-center justify-center text-center p-5 loading-post">
+						<svg aria-hidden="true" role="status" style="font-size: 35px;" class="inline w-10 mx-auto text-blue-600 animate-spin" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="#E5E7EB" />
+							<path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentColor" />
+					  </svg>
+					</div>
+				</div>
+			</section>`)));
+
+		$('.btn-back').click(() => {
+			changePath('/');
+			renderHomePage();
+		});
+
+		$(window).on('popstate', function (event) {
+			changePath('/');
+			renderHomePage();
+		});
+
+		get(ref(database, `/posts/${getLastPathSegment()}`))
+			.then((snapshot) => {
+				if (snapshot.exists()) {
+					const post = snapshot.val();
+					$('title').html(`${truncate2(post.postBody, 16)} - Tambayan`);
+					get(ref(database, `/users/${post.uid}`))
+						.then((snapshot) => {
+							const user = snapshot.val();
+							$('.comment-post-holder').html(posts(post, user));
+							$('.comment-post').append($($.parseHTML(
+								`<div class="mt-2">
+								  <h4 class="mx-4 sm:mx-32 text-gray-600 dark:text-white text-lg font-semibold">
+								    Comments
+								  </h4>
+								  <div class="px-4 sm:px-32 comment-post-list mt-2 pb-16">
+								  </div>
+								  <div class="fixed sm:px-32 bottom-0 bg-white dark:bg-gray-900 w-full flex justify-between border-t border-gray-300 dark:border-gray-800 dark:text-white">
+								    <input type="text" class="input-comment w-full bg-transparent px-3 py-4 border-0 focus:ring-0" value="" placeholder="Type a comment..." />
+								    <button type="button" class="comment-btn bg-transparent text-blue-600 hover:text-blue-500 font-semibold text-md px-2 py-1.5">Send</button>
+								  </div>
+								</div>`
+							)));
+
+							$('.loading-post').remove();
+
+							$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
+
+							$('.comment-btn').click(() => {
+								const comm = $('.input-comment').val();
+								if (comm.length > 0) {
+									const commKey = push(child(ref(database), `/posts/${post.postKey}/comments`)).key;
+									set(ref(database, `/posts/${post.postKey}/comments/${commKey}`), {
+										key: commKey,
+										postKey: post.postKey,
+										text: $('.input-comment').val(),
+										timestamp: Date.now(),
+										uid: auth.currentUser.uid
+									}).then(() => {
+										$('.input-comment').val('');
+									}).catch((error) => {
+										new TDialog('Something when wrong.').show();
+									});
+								} else {
+									new TDialog('Comment cannot be empty.').show();
+								}
+							});
+
+							$(`.btn-comment-${post.postKey}`).click(() => {
+								$('.input-comment').focus();
+							});
+
+							onChildChanged(ref(database, 'posts'), (snapshot) => {
+								const post = snapshot.val();
+								const key = snapshot.key;
+								$(`#btn-like-count-${key}`).text(formatNumber(post.likeCount));
+								if (post.likes && post.likes[auth.currentUser.uid] === true) {
+									$(`#btn-like-icon-${key}`).removeClass('fa-regular');
+									$(`#btn-like-icon-${key}`).addClass('fa-solid text-blue-600 animate__bounceIn');
+								} else {
+									$(`#btn-like-icon-${key}`).removeClass('fa-solid text-blue-600 animate__bounceIn');
+									$(`#btn-like-icon-${key}`).addClass('fa-regular');
+								}
+							});
+
+							$(`.comment-count-${post.postKey}`).html(post.postKey ? formatNumber(Object.keys(post.comments).length) : '0');
+							onChildAdded(query(ref(database, `/posts/${post.postKey}/comments`)), (snapshot1) => {
+								if (snapshot1.exists()) {
+									const comment = snapshot1.val();
+									get(ref(database, `/users/${comment.uid}`))
+										.then((snapshot) => {
+											$('.comment-post-list').prepend($($.parseHTML(
+												`
+								         <div class="flex items-start justify-start mb-2">
+								           <img class="w-10 h-10 border border-gray-300 dark:border-gray-800 rounded-full me-2" src="${user.userPhoto}"/>
+								           <div class="comment-body">
+								             <div class="px-2 py-2 rounded-md bg-gray-800 me-10 text-gray-500 dark:text-gray-100">
+								               <h5 class="dark:text-white font-semibold flex">${user.displayName}</h5>
+								               ${comment.text}
+								             </div>
+								             <p class="mt-1.5 text-xs dark:text-gray-100">${formatRelativeTime(comment.timestamp)}</p>
+								           </div>
+								         </div>`
+											)));
+										});
+								}
+							});
+						}).catch((error) => {
+							$('.comment-post').html($($.parseHTML(
+								`
+						     <p class="text-gray-300 dark:text-white px-4 text-center mt-32">
+						       ${error.message}
+						     </p>`)));
+						});
+				} else {
+					$('.comment-post').html($($.parseHTML(
+						`
+						<p class="text-gray-300 dark:text-white px-4 text-center mt-32">
+						  This post doesn\'t exist or it\'s already removed by the owner.
+						</p>
+					`)));
+				}
+			})
+			.catch((error) => {
+				new TDialog('Something went wrong.').show();
+			});
 	}
 
 	function renderPrivacyPolicyPage() {
@@ -1645,7 +1832,7 @@ function createRipple(event) {
 
 	function renderTermsOfServicePage() {
 		$('main').html($($.parseHTML(
-		 `<section class="terms-of-service-layout max-h-screen from-slate-50 dark:bg-gray-900">
+			`<section class="terms-of-service-layout max-h-screen from-slate-50 dark:bg-gray-900">
 				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900">
 					<div class="sm:mx-32 px-3 sm:px-0 py-3 lg:px-5 lg:pl-3">
 						<div class="flex items-center justify-between">
@@ -2267,6 +2454,10 @@ function createRipple(event) {
 							renderHomePage();
 						}
 
+						if (path() === '/p/' + getLastPathSegment()) {
+							renderPostCommentPage();
+						}
+
 						if (path() === '/auth/login') {
 							redirect('/');
 						}
@@ -2279,7 +2470,7 @@ function createRipple(event) {
 							redirect('/');
 						}
 
-						if (path() === '/user/' + getLastPathSegment()) {
+						if (path() === '/u/' + getLastPathSegment()) {
 							renderProfilePage();
 						}
 
@@ -2301,6 +2492,10 @@ function createRipple(event) {
 						renderWelcomePage();
 					}
 
+					if (path() === '/p/' + getLastPathSegment()) {
+						renderPostCommentPage();
+					}
+
 					if (path() === '/beta/signup') {
 						renderBetaPage();
 					}
@@ -2313,7 +2508,7 @@ function createRipple(event) {
 						renderTermsOfServicePage();
 					}
 
-					if (path() === '/user/' + getLastPathSegment()) {
+					if (path() === '/u/' + getLastPathSegment()) {
 						renderProfilePage();
 					}
 
