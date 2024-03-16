@@ -76,7 +76,7 @@ function getWebToken() {
 		.then((currentToken) => {
 			const user = auth.currentUser;
 			if (currentToken) {
-				update(ref(database, `/users/tokens/${user.uid}`), {
+				update(ref(database, `/users/${user.uid}/tokens`), {
 					webFcmToken: currentToken
 				});
 			} else {
