@@ -408,7 +408,7 @@ function getPath() {
                 </div>
 							</div>
 							<div class="post-body px-2 py-2${posts.postBodyColor !== 0 ? 'w-full my-2 h-72 sm:h-96 sm:mb-3 text-center flex items-center justify-center bg-blue-900 text-white' : ''}">
-								${truncate(convertLinksAndHashtagToHTML(posts.postBody.replace('\r\n', '<br>').replace('\n', '<br>')), 200)}
+								${getPath() === 'p' ? convertLinksAndHashtagToHTML(posts.postBody.replace('\r\n', '<br>').replace('\n', '<br>')) : truncate(convertLinksAndHashtagToHTML(posts.postBody.replace('\r\n', '<br>').replace('\n', '<br>')), 200)}
 							</div>
 							${posts.images != null ? '<img class="border border-gray-300 dark:border-gray-800 w-full sm:max-h-96 sm:object-center mb-3 rounded-xl object-cover bg-no-repeat bg-center" src="' + posts.images[0] + '"/>' : ''}
 							<div class="post-action flex items-center justify-center grid-cols-3 font-medium">
@@ -929,7 +929,10 @@ function getPath() {
 				.then((snapshot) => {
 					const user = snapshot.val();
 
-					$('.post-list').prepend(posts(post, user)).fadeIn();
+					if (user.followers && user.followers[auth.currentUser.uid] === true || uid === auth.currentUser.uid) {
+						$('.post-list').prepend(posts(post, user)).fadeIn();
+					}
+					
 					$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
 
 					$(`#btn-options-${post.postKey}`).click(() => {
@@ -941,12 +944,7 @@ function getPath() {
 					$(`.btn-comment-${post.postKey}`).click(() => {
 						changePath(`/p/${post.postKey}`);
 						renderPostCommentPage();
-					});
-
-					$(`#${post.postKey}`).on('click', 'a', (e) => {
-						e.preventDefault();
-						const url = $(this).attr('href');
-						//
+						scrollTop();
 					});
 
 					$('.loading-post').remove().fadeOut('slow');
@@ -1148,7 +1146,7 @@ function getPath() {
 				      <p class="text-xs font-bold text-gray-600 dark:text-white">A SOCIAL COMMUNITY NETWORK</p>
 				      <p class="text-gray-500 text-3xl dark:text-gray-400 mt-3 mb-3">Welcome to Tambayan</p>
 				      <p class="text-gray-500 text-sm dark:text-gray-400">Connect, chat, post, and chill with friends. Join rooms, start conversations, and have fun! 🎉</p>
-				      <button class="beta-page text-white px-4 py-1.5 rounded-xl dark:hover:bg-blue-500 hover:bg-gray-300 bg-blue-600 mt-3">Get early access</button>
+				      <button class="beta-page text-white px-4 py-1.5 rounded-xl dark:hover:bg-blue-500 hover:bg-gray-300 bg-blue-600 mt-3">Become a member</button>
 				      <p class="text-gray-500 text-sm dark:text-gray-400 mt-3">Alreay have an account? <a href="/auth/login" class="text-blue-600 font-semibold hover:text-blue-400">Sign in here</a>.</p>
 				    </div>
 				    <div class="hidden flex items-end justify-end sm:block mt-14">
@@ -1157,9 +1155,9 @@ function getPath() {
 				  </div>
 				  <div class="text-center dark:text-white mt-36">
 				    <div class="flex items-center justify-center">
-				      <ul class="text-xs flex items-center justify-center">
+				      <ul class="text-xs flex items-center justify-center gap-2">
+				        <li><a href="/about" class="dark:text-gray-300 hover:text-blue-600">About</a></li>
 				        <li><a href="/privacy-policy" class="dark:text-gray-300 hover:text-blue-600">Privacy Policy</a></li>
-				        <li class="mx-3 dark:text-gray-300">&bull;</li>
 				        <li><a href="/terms-of-service" class="dark:text-gray-300 hover:text-blue-600">Terms of Service</a></li>
 				      </ul>
 				    </div>
@@ -1219,9 +1217,9 @@ function getPath() {
 				  <div class="text-center dark:text-white mt-36">
 				    <div class="text-center dark:text-white mt-36">
 				    <div class="flex items-center justify-center">
-				      <ul class="text-xs flex items-center justify-center">
+				      <ul class="text-xs flex items-center justify-center gap-2">
+				        <li><a href="/about" class="dark:text-gray-300 hover:text-blue-600">About</a></li>
 				        <li><a href="/privacy-policy" class="dark:text-gray-300 hover:text-blue-600">Privacy Policy</a></li>
-				        <li class="mx-3 dark:text-gray-300">&bull;</li>
 				        <li><a href="/terms-of-service" class="dark:text-gray-300 hover:text-blue-600">Terms of Service</a></li>
 				      </ul>
 				    </div>
@@ -1234,7 +1232,7 @@ function getPath() {
 		$('.beta-signup').click(() => {
 			const email = $('.beta-email').val();
 			if (email.length < 4) {
-				new TDialog('Email should be 4 and higher.').show();
+				new TDialog('Email should be 4 chars and higher.').show();
 				return;
 			}
 			$('.beta-signup').html(loader()).attr('disabled', 'true');
@@ -1367,6 +1365,7 @@ function getPath() {
 											$(`.btn-comment-${post.postKey}`).click(() => {
 												changePath(`/p/${post.postKey}`);
 												renderPostCommentPage();
+												scrollTop();
 											});
 
 											$(`#${post.postKey}`).on('click', 'a', (e) => {
@@ -1550,7 +1549,7 @@ function getPath() {
 								}
 							});
 
-							$(`.comment-count-${post.postKey}`).html(post.postKey ? formatNumber(Object.keys(post.comments).length) : '0');
+							$(`.comment-count-${post.postKey}`).html(post.comments ? formatNumber(Object.keys(post.comments).length) : '0');
 							onChildAdded(query(ref(database, `/posts/${post.postKey}/comments`)), (snapshot1) => {
 								if (snapshot1.exists()) {
 									const comment = snapshot1.val();
@@ -1559,16 +1558,21 @@ function getPath() {
 											$('.comment-post-list').prepend($($.parseHTML(
 												`
 								         <div class="flex items-start justify-start mb-2">
-								           <img class="w-10 h-10 border border-gray-300 dark:border-gray-800 rounded-full me-2" src="${user.userPhoto}"/>
+								           <img class="comment-profile-${comment.key} w-10 h-10 border border-gray-300 dark:border-gray-800 rounded-full me-2" src="${user.userPhoto}"/>
 								           <div class="comment-body">
-								             <div class="px-2 py-2 rounded-md bg-gray-800 me-10 text-gray-500 dark:text-gray-100">
-								               <h5 class="dark:text-white font-semibold flex">${user.displayName}</h5>
+								             <div class="px-2 py-2 rounded-lg bg-gray-800 me-10 text-gray-500 dark:text-gray-100">
+								               <h5 class="dark:text-white font-semibold flex items-start justify-start">${user.displayName} ${user.verification === 'verified' ? '<i class="ms-1 fa-sharp fa-solid fa-circle-check text-blue-600 text-md mt-1"></i>' : ''}</h5>
 								               ${comment.text}
 								             </div>
 								             <p class="mt-1.5 text-xs dark:text-gray-100">${formatRelativeTime(comment.timestamp)}</p>
 								           </div>
 								         </div>`
 											)));
+
+											$(`.comment-profile-${comment.key}`).click(() => {
+												changePath(`/u/${user.username}`);
+												renderProfilePage();
+											})
 										});
 								}
 							});
