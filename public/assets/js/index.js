@@ -75,9 +75,9 @@ function getWebToken() {
 	getToken(messaging, { vapidKey: 'BHic1OSHI5Gmg4V73K_zNgotDK0kW4w8Ukp-pOquU9HsJGwKYI3KANZUUR6cCI_sK4OPr1aGje3l90UT-gj9D6o' })
 		.then((currentToken) => {
 			const user = auth.currentUser;
-			if (currentToken) {
+			if (user && currentToken) {
 				update(ref(database, `/users/${user.uid}/tokens`), {
-					webFcmToken: currentToken
+					webPushToken: currentToken
 				});
 			} else {
 				requestPermission();
@@ -337,14 +337,19 @@ function getPath() {
 				profileLockEnabled: false,
 				sessionEnabled: false,
 				twofaEnabled: false
+			},
+			tokens: {
+				webPushToken: 'none',
+				mobilePushToken: 'none'
 			}
 		}
+
 		const users = ref(database, `/users/${user.uid}`);
 		set(users, data)
 			.then(() => {
 				sendEmailVerification(user)
 					.then(() => {
-						Swal.fire(`Email verification link was sent to ${email}`, "", "success");
+						new TDialog(`Email verification link sent.`).show();
 						signOut(auth).then(() => redirect('/'));
 					})
 					.catch((error) => {
@@ -498,6 +503,7 @@ function getPath() {
 				 </div>
 				`
 		)));
+
 		checkActionCode(auth, actionCode).then((info) => {
 			restoredEmail = info['data']['email'];
 			return applyActionCode(auth, actionCode);
@@ -660,6 +666,13 @@ function getPath() {
 							</li>
 						</ul>
 						<div class="w-full z-1 grid fixed start-0 bottom-0 px-3 pb-3">
+						  <div class="inline-flex items-start justify-start mb-3">
+						    <img src="${auth.currentUser.photoURL}" class="w-12 h-12 me-2 rounded-full" />
+						    <div class="mt-0.5">
+						      <h4 class="dark:text-white font-semibold">${auth.currentUser.displayName}</h4>
+						      <p class="text-md text-blue-600 font-bold">Settings</p>
+						    </div>
+						  </div>
 						  <button class="btn-create-post flex items-center justify-center bg-gray-200 hover:bg-gray-300 hover:text-white dark:bg-gray-800 text-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-700 group">
 							  Create a new post
 						  </button>
@@ -932,7 +945,7 @@ function getPath() {
 					if (user.followers && user.followers[auth.currentUser.uid] === true || uid === auth.currentUser.uid) {
 						$('.post-list').prepend(posts(post, user)).fadeIn();
 					}
-					
+
 					$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
 
 					$(`#btn-options-${post.postKey}`).click(() => {
@@ -1297,14 +1310,29 @@ function getPath() {
 					snapshot.forEach((user) => {
 						$('title').html(`${data[user.key].displayName} - Tambayan`);
 						$('.profile').html($($.parseHTML(
-							`<div class="profile-page sm:mx-32 py-1.5 mt-10">
+						 `<div class="profile-page sm:mx-32 py-1.5 mt-10">
 							<div class="profile-cover h-32 bg-blue-900"></div>
 							<div class="relative -translate-y-12">
 								<div class="px-4 flex justify-between">
-									<img src="${data[user.key].userPhoto}" class="rounded-full border border-gray-600 dark:border-gray-800 w-28 h-28" />
-									<button class="profile-btn-follow-${user.key} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 mt-15 rounded-xl border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${auth.currentUser ? data[user.key].uid === auth.currentUser.uid ? 'Edit profile' : data[user.key].followers ? data[user.key].followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : 'Follow' : 'Follow'}</button>
+                 <div class="relative w-28 h-28 bg-gray-300 rounded-full overflow-hidden">
+                   <img src="${data[user.key].userPhoto}" alt="Profile Picture" class="w-full h-full z-40 object-cover">
+                   ${
+                   data[user.key].uid === auth.currentUser.uid ?
+                   '<div class="absolute inset-0 flex items-center justify-center">' +
+                     '<div class="bg-black bg-opacity-50 hover:bg-opacity-40 px-4 py-3 rounded-full">' +
+                       '<span class="sr-only">Edit profile picture</span>' +
+                       '<i class="fa-sharp fa-solid fa-camera text-lg text-white"></i>' +
+                     '</div>' +
+                    '</div>'
+                    : ''
+                   }
+                  </div>
+									<div class="inline-flex items-end justify-end gap-2">
+									  <button class="profile-btn-chat-${user.key} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 rounded-full border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5"><i class="fa-regular fa-message text-lg mt-1.5"></i></button>
+									  <button class="profile-btn-follow-${user.key} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 rounded-full border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${auth.currentUser ? data[user.key].uid === auth.currentUser.uid ? 'Edit profile' : data[user.key].followers ? data[user.key].followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : 'Follow' : 'Follow'}</button>
+									</div>
 								</div>
-								<h4 class="flex px-4 text-2xl dark:text-white mt-2">${data[user.key].displayName} ${data[user.key].verification === 'verified' ? '<i class="mt-1 ms-2 text-lg fa-sharp fa-solid fa-circle-check text-blue-600"></i>' : ''}</h4>
+								<h4 class="flex px-4 text-2xl dark:text-white mt-2">${data[user.key].displayName} ${data[user.key].verification === 'verified' ? '<i class="mt-1.5 ms-2 text-lg fa-sharp fa-solid fa-circle-check text-blue-600"></i>' : ''}</h4>
 								<div class="px-4 flex items-start justify-start gap-2">
 									<p class="text-gray-600 dark:text-white"><span class="font-bold">${formatNumber(data[user.key].followerCount)}</span> followers</p>
 									<p class="text-gray-600 dark:text-white"><span class="font-bold">${formatNumber(data[user.key].followingCount)}</span> followings</p>
@@ -1317,12 +1345,11 @@ function getPath() {
 								'<div class="mt-2 px-4 flex items-start justify-start gap-2">'
 								+ '<span class="text-xs bg-gray-300 rounded-xl px-2 py-1.5 text-gray-600 dark:text-white dark:bg-gray-800"><i class="fa-sharp fa-solid fa-location-dot dark:text-white me-1.5"></i>' + data[user.key].biodata.currentCity + '</span>' +
 								'</div>' : ''}
-								</div>
-								<hr class="mb-2 border-gray-300 dark:border-gray-800">
+								<hr class="mt-3 mb-3 border-gray-300 dark:border-gray-800">
 								<div class="flex justify-between">
 								  <h4 class="text-xl px-4 text-gray-600 dark:text-white">Posts</h4>
 								</div>
-								<hr class="mt-3 mb-3 border-gray-300 dark:border-gray-800">
+								<hr class="mt-3 mb-1 border-gray-300 dark:border-gray-800">
 								<div class="user-post-list">
 										<div class="w-full max-h-screen flex items-center justify-center text-center p-5 loading-post">
 											<svg aria-hidden="true" role="status" style="font-size: 35px;" class="inline w-10 me-3 mt-3 text-blue-600 animate-spin" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1330,6 +1357,7 @@ function getPath() {
 												<path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentColor" />
 											</svg>
 										</div>
+								  </div>
 								</div>
 							</div>
 						</div>`
@@ -1555,13 +1583,14 @@ function getPath() {
 									const comment = snapshot1.val();
 									get(ref(database, `/users/${comment.uid}`))
 										.then((snapshot) => {
+											const user = snapshot.val();
 											$('.comment-post-list').prepend($($.parseHTML(
 												`
 								         <div class="flex items-start justify-start mb-2">
 								           <img class="comment-profile-${comment.key} w-10 h-10 border border-gray-300 dark:border-gray-800 rounded-full me-2" src="${user.userPhoto}"/>
 								           <div class="comment-body">
-								             <div class="px-2 py-2 rounded-lg bg-gray-800 me-10 text-gray-500 dark:text-gray-100">
-								               <h5 class="dark:text-white font-semibold flex items-start justify-start">${user.displayName} ${user.verification === 'verified' ? '<i class="ms-1 fa-sharp fa-solid fa-circle-check text-blue-600 text-md mt-1"></i>' : ''}</h5>
+								             <div class="px-2 py-2 rounded-lg bg-gray-200 dark:bg-gray-800 me-10 dark:text-white">
+								               <h5 class="font-semibold flex items-start justify-start">${user.displayName} ${user.verification === 'verified' ? '<i class="ms-1 fa-sharp fa-solid fa-circle-check text-blue-600 text-md mt-1"></i>' : ''}</h5>
 								               ${comment.text}
 								             </div>
 								             <p class="mt-1.5 text-xs dark:text-gray-100">${formatRelativeTime(comment.timestamp)}</p>
@@ -2402,6 +2431,70 @@ function getPath() {
 		)));
 	}
 
+	function renderAuthHandler() {
+		const mode = getParameterByName('mode');
+		const actionCode = getParameterByName('oobCode');
+		const continueUrl = getParameterByName('continueUrl');
+		const lang = getParameterByName('lang') || 'en';
+		$('main').html($($.parseHTML(
+			`<section class="main-layout max-h-screen from-slate-50 dark:bg-gray-900">
+										<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900 sm:border-b-2 sm:dark:border-gray-800">
+											<div class="px-3 py-3 lg:px-5 lg:pl-3">
+												<div class="flex items-center justify-between">
+													<button type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
+													</button>
+													<div class="flex items-center justify-start rtl:justify-end">
+														<a href="/" class="flex md:me-24">
+                              <img src="/assets/img/barkada.png" class="w-10 h-10"/>
+														</a>
+													</div>
+													<div class="flex items-center">
+														<div class="flex items-center ms-3">
+															<div>
+																<button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" aria-expanded="false">
+																</button>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</nav>
+
+										<div class="body-layout mt-4 flex items-center justify-center text-center ">
+										</div>
+									</section>`
+		)));
+		switch (mode) {
+			case 'resetPassword':
+				$('title').html('Password reset - Tambayan');
+				handleResetPassword(auth, actionCode, continueUrl, lang);
+				break;
+			case 'recoverEmail':
+				$('title').html('Email recovery - Tambayan');
+				handleRecoverEmail(auth, actionCode, lang);
+				break;
+			case 'verifyEmail':
+				$('title').html('Verify emaill - Tambayan');
+				handleVerifyEmail(auth, actionCode, continueUrl, lang);
+				break;
+			default:
+				$('title').html('Invalid mode');
+				$('.body-layout').html($($.parseHTML(
+					`
+					         <div class="w-full max-h-screen p-5">
+					           <img src="/assets/img/undraw_cancel_re_pkdm.svg" class="mx-auto h-52" />
+						         <h4 class="mt-3 mb-3 dark:text-white text-xl">
+						           Error
+						         </h4>
+					           <p class="dark:text-white mt-3">
+					             Invalid mode.
+					           </p>
+				           </div>
+				          `
+				)));
+		}
+	}
+
 	function renderSignupPage() {
 		$('title').html('Signup — Tambayan');
 		renderLoginPage();
@@ -2431,6 +2524,51 @@ function getPath() {
 		});
 	}
 
+	function renderPageNotFound() {
+		$('title').html('Page Not Found');
+		$('main').html($($.parseHTML(
+			`<div class="w-full">
+				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900 border-b dark:border-gray-800">
+					<div class="px-3 py-3 lg:px-5 lg:pl-3">
+						<div class="flex items-center justify-between">
+							<button aria-controls="sidebar-menu" type="button"
+								class="btn-sidebar inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
+							</button>
+							<div class="flex items-center justify-start rtl:justify-end">
+								<a href="/" class="flex md:me-24">
+									<img src="/assets/img/barkada.png" class="w-10 h-10" />
+								</a>
+							</div>
+							<div class="flex items-center">
+								<div class="flex items-center ms-3">
+									<div>
+										<button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300"
+											aria-expanded="false">
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nav>
+				<div class="items-center">
+					<div class="w-full sm:w-96 px-4 my-3 mx-auto">
+						<h2 class="text-6xl dark:text-gray-100">404</h2>
+						<p class="mt-2 text-3xl dark:text-gray-100">Page not found</p>
+						<p class="mt-2 dark:text-gray-100">The page you're looking for is not found on this website.
+							Please check the URL for any mistakes and try again.</p>
+						<button class="bg-blue-600 mt-2 rounded-xl p-5 py-1.5 text-white hover:bg-blue-500"
+							onclick="window.location.href = '/'">Go
+							to home</button>
+						<div class="mt-8 text-xs text-center dark:text-gray-100">
+							&copy; Tambayan 2024. All Rights Reserved.
+						</div>
+					</div>
+				</div>
+			</div>`
+		)));
+	}
+
 	function getParameterByName(name) {
 		const queryString = window.location.search;
 		const url = new URLSearchParams(queryString);
@@ -2454,137 +2592,91 @@ function getPath() {
 						});
 					} else {
 						getWebToken();
-						if (path() === '/') {
-							renderHomePage();
-						}
+						switch (path()) {
+							case '/':
+								renderHomePage();
+								break;
 
-						if (path() === '/p/' + getLastPathSegment()) {
-							renderPostCommentPage();
-						}
+							case '/p/' + getLastPathSegment():
+								renderPostCommentPage();
+								break;
 
-						if (path() === '/auth/login') {
-							redirect('/');
-						}
+							case '/u/' + getLastPathSegment():
+								renderProfilePage();
+								break;
 
-						if (path() === '/auth/signup') {
-							redirect('/');
-						}
+							case '/beta/signup':
+								redirect('/');
+								break;
 
-						if (path() === '/auth') {
-							redirect('/');
-						}
+							case '/privacy-policy':
+								renderPrivacyPolicyPage();
+								break;
 
-						if (path() === '/u/' + getLastPathSegment()) {
-							renderProfilePage();
-						}
+							case 'terms-of-service':
+								renderTermsOfServicePage();
+								break;
 
-						if (path() === '/beta/signup') {
-							redirect('/');
-						}
+							case '/auth/login':
+								redirect('/');
+								break;
 
-						if (path() === '/privacy-policy') {
-							renderPrivacyPolicyPage();
-						}
+							case '/auth/signup':
+								redirect('/');
+								break;
 
-						if (path() === '/terms-of-service') {
-							renderTermsOfServicePage();
+							case '/auth':
+								renderAuthHandler();
+								break;
+
+							default:
+								renderPageNotFound();
+								break;
 						}
 					}
 				} else {
+					switch (path()) {
+						case '/':
+							renderWelcomePage();
+							break;
 
-					if (path() === '/') {
-						renderWelcomePage();
-					}
+						case '/p/' + getLastPathSegment():
+							renderPostCommentPage();
+							break;
 
-					if (path() === '/p/' + getLastPathSegment()) {
-						renderPostCommentPage();
-					}
+						case '/u/' + getLastPathSegment():
+							renderProfilePage();
+							break;
 
-					if (path() === '/beta/signup') {
-						renderBetaPage();
-					}
+						case '/beta/signup':
+							renderBetaPage();
+							break;
 
-					if (path() === '/privacy-policy') {
-						renderPrivacyPolicyPage();
-					}
+						case '/privacy-policy':
+							renderPrivacyPolicyPage();
+							break;
 
-					if (path() === '/terms-of-service') {
-						renderTermsOfServicePage();
-					}
+						case 'terms-of-service':
+							renderTermsOfServicePage();
+							break;
 
-					if (path() === '/u/' + getLastPathSegment()) {
-						renderProfilePage();
-					}
+						case '/auth/login':
+							renderLoginPage();
+							break;
 
-					if (path() === '/auth/login') {
-						renderLoginPage();
-					}
+						case '/auth/signup':
+							renderSignupPage();
+							break;
 
-					if (path() === '/auth/signup') {
-						renderSignupPage();
-					}
+						case '/auth':
+							renderAuthHandler();
+							break;
 
-					if (path() === '/auth') {
-						const mode = getParameterByName('mode');
-						const actionCode = getParameterByName('oobCode');
-						const continueUrl = getParameterByName('continueUrl');
-						const lang = getParameterByName('lang') || 'en';
-						$('main').html($($.parseHTML(
-							`<section class="main-layout max-h-screen from-slate-50 dark:bg-gray-900">
-										<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900 sm:border-b-2 sm:dark:border-gray-800">
-											<div class="px-3 py-3 lg:px-5 lg:pl-3">
-												<div class="flex items-center justify-between">
-													<button type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
-													</button>
-													<div class="flex items-center justify-start rtl:justify-end">
-														<a href="/" class="flex md:me-24">
-                              <img src="/assets/img/barkada.png" class="w-10 h-10"/>
-														</a>
-													</div>
-													<div class="flex items-center">
-														<div class="flex items-center ms-3">
-															<div>
-																<button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" aria-expanded="false">
-																</button>
-															</div>
-														</div>
-													</div>
-												</div>
-											</div>
-										</nav>
-
-										<div class="body-layout mt-4 flex items-center justify-center text-center ">
-										</div>
-									</section>`
-						)));
-						switch (mode) {
-							case 'resetPassword':
-								handleResetPassword(auth, actionCode, continueUrl, lang);
-								break;
-							case 'recoverEmail':
-								handleRecoverEmail(auth, actionCode, lang);
-								break;
-							case 'verifyEmail':
-								handleVerifyEmail(auth, actionCode, continueUrl, lang);
-								break;
-							default:
-								$('.body-layout').html($($.parseHTML(
-									`
-					         <div class="w-full max-h-screen p-5">
-					           <img src="/assets/img/undraw_cancel_re_pkdm.svg" class="mx-auto h-52" />
-						         <h4 class="mt-3 mb-3 dark:text-white text-xl">
-						           Error
-						         </h4>
-					           <p class="dark:text-white mt-3">
-					             Invalid mode.
-					           </p>
-				           </div>
-				          `
-								)));
-						}
+						default:
+							break;
 					}
 				}
-				setTimeout(() => $('.loading').hide().fadeOut(), 2000);
+				setTimeout(() => $('.loading').fadeOut(), 2000);
 			});
 		} else {
 			console.error("Network connection is offline.");

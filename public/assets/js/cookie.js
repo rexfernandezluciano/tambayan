@@ -1,5 +1,6 @@
-import 'https://unpkg.com/@porscheofficial/cookie-consent-banner@1.0.0/dist/cookie-consent-banner/cookie-consent-banner.esm.js';
-/* Update available Cookie Categories */
+import 'https://unpkg.com/@porscheofficial/cookie-consent-banner@4.0.2/dist/cookie-consent-banner/cookie-consent-banner.esm.js';
+import 'https://www.googletagmanager.com/gtag/js?id=G-ZJGDFMPRMQ';
+
 const cookieConsentBannerElement = document.querySelector(
 	"cookie-consent-banner"
 );
@@ -26,23 +27,12 @@ cookieConsentBannerElement.availableCategories = [
 ];
 
 function loadTagManager() {
-	if (typeof google_tag_manager !== "undefined") return; // load only once
-	const gTags = function (w, d, s, l, i) {
-		w[l] = w[l] || [];
-		w[l].push({
-			"gtm.start": new Date().getTime(),
-			event: "gtm.js",
-		});
-		let f = d.getElementsByTagName(s)[0],
-			j = d.createElement(s),
-			dl = l != "dataLayer" ? "&l=" + l : "";
-		j.async = true;
-		j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
-		f.parentNode.insertBefore(j, f);
-	};
-
-	gTags(window, document, "script", "dataLayer", "GTM-XXX");
+	window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJGDFMPRMQ');
 }
+
 window.addEventListener(
 	"cookie_consent_preferences_restored",
 	loadTagManager

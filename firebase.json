@@ -10,41 +10,9 @@
 			"**/node_modules/**"
 		],
 		"rewrites": [ {
-			"source": "/",
+			"source": "**",
 			"destination": "/index.html"
-		},
-			{
-				"source": "/auth/login",
-				"destination": "/index.html"
-			},
-			{
-				"source": "/auth/signup",
-				"destination": "/index.html"
-			},
-			{
-				"source": "/auth",
-				"destination": "/index.html"
-			},
-			{
-				"source": "/u/**",
-				"destination": "/index.html"
-			},
-			{
-				"source": "/beta/signup",
-				"destination": "/index.html"
-			},
-			{
-				"source": "/privacy-policy",
-				"destination": "/index.html"
-			},
-			{
-				"source": "/terms-of-service",
-				"destination": "/index.html"
-			},
-			{
-				"source": "/p/**",
-				"destination": "/index.html"
-			}],
+		}],
 		"headers": [ {
 			"source": "**/*.@(eot|otf|ttf|ttc|woff|font.css)",
 			"headers": [ {
