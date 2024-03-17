@@ -1,5 +1,4 @@
 import 'https://unpkg.com/@porscheofficial/cookie-consent-banner@4.0.2/dist/cookie-consent-banner/cookie-consent-banner.esm.js';
-import 'https://www.googletagmanager.com/gtag/js?id=G-ZJGDFMPRMQ';
 
 const cookieConsentBannerElement = document.querySelector(
 	"cookie-consent-banner"
