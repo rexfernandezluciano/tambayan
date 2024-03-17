@@ -1,0 +1,16 @@
+:root {
+	--cookie-consent-banner-z-index-container: 1000;
+	--cookie-consent-banner-colors-primary: hsl(221, 83.2%, 53.3%);
+	--cookie-consent-banner-colors-primary-border: var(
+	--cookie-consent-banner-colors-primary
+	);
+	--cookie-consent-banner-colors-primary-content: #fff;
+
+	--cookie-consent-banner-border-radius-buttons: 100px;
+	--cookie-consent-banner-border-radius-body: 0;
+
+	--cookie-consent-banner-spacings-container-padding-top: 0;
+	--cookie-consent-banner-spacings-container-padding-left: 0;
+	--cookie-consent-banner-spacings-container-padding-bottom: 0;
+	--cookie-consent-banner-spacings-container-padding-right: 0;
+}
