@@ -1,26 +1,23 @@
 import 'https://code.jquery.com/jquery-3.7.1.min.js';
-import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js';
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-analytics.js';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app-check.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js";
 import {
-	getDatabase,
-	runTransaction,
-	ref,
-	child,
-	get,
-	set,
-	push,
-	update,
+	getFirestore,
+	collection,
+	doc,
+	addDoc,
+	updateDoc,
+	setDoc,
+	getDoc,
+	getDocs,
 	query,
-	orderByChild,
-	equalTo,
-	limitToFirst,
-	onValue,
-	onDisconnect,
-	onChildAdded,
-	onChildChanged,
-	onChildRemoved
-} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js';
+	where,
+	onSnapshot,
+	runTransaction,
+	orderBy,
+	limit
+} from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js';
 import {
 	createUserWithEmailAndPassword,
 	getAuth,
@@ -38,9 +35,9 @@ import {
 	signInWithPopup,
 	GoogleAuthProvider,
 	getAdditionalUserInfo
-} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
-import { getPerformance } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-performance.js";
-import { getRemoteConfig, getValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-remote-config.js";
+} from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js';
+import { getPerformance } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-performance.js";
+import { getRemoteConfig, getValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-remote-config.js";
 
 import app from './config.js';
 import TDialog from './dialog.js';
@@ -54,7 +51,7 @@ const analytics = getAnalytics(app);
 const messaging = getMessaging(app);
 const perf = getPerformance(app);
 
-const database = getDatabase();
+const db = getFirestore();
 
 const auth = getAuth();
 auth.useDeviceLanguage();
@@ -76,8 +73,10 @@ function getWebToken() {
 		.then((currentToken) => {
 			const user = auth.currentUser;
 			if (user && currentToken) {
-				update(ref(database, `/users/${user.uid}/tokens`), {
-					webPushToken: currentToken
+				updateDoc(doc(db, `users`, `${user.uid}`), {
+					tokens: {
+						webPushToken: currentToken
+					}
 				});
 			} else {
 				requestPermission();
@@ -100,62 +99,109 @@ function getLastPathSegment() {
 	return url.pathname.split('/').pop();
 }
 
+function generateRandomId(length) {
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	const charsLength = chars.length;
+	let randomId = '';
+
+	for (let i = 0; i < length; i++) {
+		randomId += chars.charAt(Math.floor(Math.random() * charsLength));
+	}
+
+	return randomId;
+}
+
+function generateFirestoreId() {
+	const timestamp = (new Date()).getTime().toString(16);
+	const randomPart = generateRandomId(20); // 20 characters to match Firestore
+
+	return `${timestamp}${randomPart}`;
+}
+
+// Usage example:
+const randomFirestoreId = generateFirestoreId();
+console.log(randomFirestoreId);
+
+
 function toggleLike(uid, id) {
-	const postRef = ref(database, `/posts/${id}`);
-	runTransaction(postRef, (post) => {
-		if (post) {
-			if (post.likes && post.likes[uid]) {
+	const postRef = doc(db, 'posts', id);
+	runTransaction(db, transaction => {
+		return transaction.get(postRef).then(postDoc => {
+			if (!postDoc.exists()) {
+				throw new Error('Post does not exist!');
+			}
+
+			const post = postDoc.data();
+			const likes = post.likes || {};
+
+			if (likes[uid]) {
 				post.likeCount--;
-				post.likes[uid] = null;
+				delete likes[uid];
 			} else {
 				post.likeCount++;
-				if (!post.likes) {
-					post.likes = {};
-				}
-				post.likes[uid] = true;
+				likes[uid] = true;
 			}
-		}
-		return post;
+
+			transaction.update(postRef, {
+				likeCount: post.likeCount,
+				likes: likes
+			});
+		});
 	});
 }
 
 function toggleFollow(uid, userId) {
-	const userRef = ref(database, `/users/${userId}`);
-	runTransaction(userRef, (user) => {
-		if (user) {
-			if (user.followings && user.followings[uid]) {
-				user.followingCount--;
-				user.followings[uid] = null;
-			} else {
-				user.followingCount++;
-				if (!user.followings) {
-					user.followings = {};
-				}
-				user.followings[uid] = true;
+	const followingRef = doc(db, 'users', userId);
+	runTransaction(db, transaction => {
+		return transaction.get(followingRef).then(followingDoc => {
+			if (!followingDoc.exists()) {
+				throw new Error('Following does not exist!');
 			}
-		}
-		addFollowers(userId, uid);
-		return user;
-	});
+
+			const following = followingDoc.data();
+			const followings = following.followings || {};
+
+			if (followings[uid]) {
+				following.followingCount--;
+				delete followings[uid];
+			} else {
+				following.followingCount++;
+				followings[uid] = true;
+			}
+
+			transaction.update(followingRef, {
+				followingCount: following.followingCount,
+				followings: followings
+			});
+		});
+	}).then(() => addFollowers(userId, uid));
 }
 
 function addFollowers(uid, userId) {
-	const userRef = ref(database, `/users/${userId}`);
-	runTransaction(userRef, (user) => {
-		if (user) {
-			if (user.followers && user.followers[uid]) {
-				user.followerCount--;
-				user.followers[uid] = null;
-			} else {
-				user.followerCount++;
-				if (!user.followers) {
-					user.followers = {};
-				}
-				user.followers[uid] = true;
+	const followerRef = doc(db, 'users', userId);
+	runTransaction(db, transaction => {
+		return transaction.get(followerRef).then(followerDoc => {
+			if (!followerDoc.exists()) {
+				throw new Error('Follower does not exist!');
 			}
-		}
-		return user;
-	});
+
+			const follower = followerDoc.data();
+			const followers = follower.followers || {};
+
+			if (followers[uid]) {
+				follower.followerCount--;
+				delete followers[uid];
+			} else {
+				follower.followerCount++;
+				followers[uid] = true;
+			}
+
+			transaction.update(followerRef, {
+				followerCount: follower.followerCount,
+				followers: followers
+			});
+		});
+	}).then(() => { });
 }
 
 function formatNumber(number) {
@@ -288,7 +334,7 @@ function getPath() {
 
 (($) => {
 
-	function createUserAccount(user, provider) {
+	async function createUserAccount(user, provider) {
 		const date = new Date($('#ca-birthday').val());
 		const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
 		const data = {
@@ -344,8 +390,7 @@ function getPath() {
 			}
 		}
 
-		const users = ref(database, `/users/${user.uid}`);
-		set(users, data)
+		setDoc(doc(db, `users`, `${user.uid}`), data)
 			.then(() => {
 				sendEmailVerification(user)
 					.then(() => {
@@ -359,7 +404,7 @@ function getPath() {
 	}
 
 	function createPost(user) {
-		const key = push(child(ref(database), 'posts')).key;
+		const key = generateRandomId(12);
 		const data = {
 			postKey: key,
 			postBody: $('#post-content').val(),
@@ -371,12 +416,13 @@ function getPath() {
 			visibility: $('#post-privacy').val(),
 			likeCount: 0
 		}
-		set(ref(database, `/posts/${key}`), data)
+		setDoc(doc(db, `posts`, `${key}`), data)
 			.then(() => {
 				setTimeout(() => {
 					$('#btn-post').html('Post').removeAttr('disabled');
 					$('.create-post-layout').addClass('hidden');
 					$('body').removeClass('overflow-y-hidden');
+					new TDialog('Your post has been published.').show();
 				}, 2000);
 			})
 			.catch((error) => {
@@ -935,75 +981,76 @@ function getPath() {
 			isOpen = false;
 		});
 
-		onChildAdded(query(ref(database, 'posts', orderByChild('postTimestamp'), limitToFirst(20))), (snapshot) => {
-			const post = snapshot.val();
-			const uid = post.uid;
-			get(ref(database, `/users/${uid}`))
-				.then((snapshot) => {
-					const user = snapshot.val();
+		getDocs(query(collection(db, 'posts'), orderBy('postTimestamp'), limit(30)))
+			.then((querySnapshot) => {
+				querySnapshot.forEach((snapshot) => {
+					const post = snapshot.data();
+					const uid = post.uid;
+					getDoc(doc(db, 'users', `${uid}`))
+						.then((snapshot) => {
+							const user = snapshot.data();
+							if (user.followers && user.followers[auth.currentUser.uid] === true || uid === auth.currentUser.uid) {
+								$('.post-list').prepend(posts(post, user)).fadeIn();
+							}
 
-					if (user.followers && user.followers[auth.currentUser.uid] === true || uid === auth.currentUser.uid) {
-						$('.post-list').prepend(posts(post, user)).fadeIn();
-					}
+							$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
 
-					$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
+							$(`#btn-options-${post.postKey}`).click(() => {
+								$(`#dropdown-${post.postKey}`).toggle('hidden');
+							});
 
-					$(`#btn-options-${post.postKey}`).click(() => {
-						$(`#dropdown-${post.postKey}`).toggle('hidden');
-					});
+							getDocs(collection(db, 'posts', `${post.postKey}`, 'comments'))
+								.then((docSnapshot) => {
+									$(`.comment-count-${post.postKey}`).html(docSnapshot.size ? formatNumber(docSnapshot.size) : '0');
+								});
 
-					$(`.comment-count-${post.postKey}`).html(post.comments ? formatNumber(Object.keys(post.comments).length) : '0');
+							$(`.btn-comment-${post.postKey}`).click(() => {
+								changePath(`/p/${post.postKey}`);
+								renderPostCommentPage();
+								scrollTop();
+							});
 
-					$(`.btn-comment-${post.postKey}`).click(() => {
-						changePath(`/p/${post.postKey}`);
-						renderPostCommentPage();
-						scrollTop();
-					});
-
-					$('.loading-post').remove().fadeOut('slow');
-				}).catch((error) => {
-					const name = 'Unknown';
+							$('.loading-post').remove().fadeOut('slow');
+						});
 				});
-		});
 
-		onChildChanged(ref(database, 'posts'), (snapshot) => {
-			const post = snapshot.val();
-			const key = snapshot.key;
-			$(`#btn-like-count-${key}`).text(formatNumber(post.likeCount));
-			if (post.likes && post.likes[auth.currentUser.uid] === true) {
-				$(`#btn-like-icon-${key}`).removeClass('fa-regular');
-				$(`#btn-like-icon-${key}`).addClass('fa-solid text-blue-600 animate__bounceIn');
-			} else {
-				$(`#btn-like-icon-${key}`).removeClass('fa-solid text-blue-600 animate__bounceIn');
-				$(`#btn-like-icon-${key}`).addClass('fa-regular');
-			}
-		});
+				const postSnapshot = onSnapshot(collection(db, 'posts'), (snapshot) => {
+					snapshot.forEach((postDoc) => {
+						const post = postDoc.data();
+						const key = post.postKey;
+						$(`#btn-like-count-${key}`).text(formatNumber(post.likeCount));
+						if (post.likes && post.likes[auth.currentUser.uid] === true) {
+							$(`#btn-like-icon-${key}`).removeClass('fa-regular');
+							$(`#btn-like-icon-${key}`).addClass('fa-solid text-blue-600 animate__bounceIn');
+						} else {
+							$(`#btn-like-icon-${key}`).removeClass('fa-solid text-blue-600 animate__bounceIn');
+							$(`#btn-like-icon-${key}`).addClass('fa-regular');
+						}
+					});
+				});
+			});
 
-		onChildRemoved(ref(database, 'posts'), (snapshot) => {
-			const key = snapshot.key;
-			$(`#${key}`).remove().fadeOut();
-		});
-
-		onChildAdded(query(ref(database, 'users'), orderByChild('creationTimestamp'), limitToFirst(10)), (snapshot) => {
-			const user = snapshot.val();
-
-			if (user.uid !== auth.currentUser.uid) {
-				$('.people-list').prepend($($.parseHTML(
-					`
+		getDocs(collection(db, "users"))
+			.then((snapshot) => {
+				snapshot.forEach((data) => {
+					const user = data.data();
+					if (user.uid !== auth.currentUser.uid) {
+						$('.people-list').prepend($($.parseHTML(
+							`
 					<button id="people-${user.uid}" class="bg-transparent text-center w-20">
 						<img class="w-16 h-16 mx-auto rounded-full" src="${user.userPhoto}"/>
 						<p class="font-small mt-2 h-5">${truncate2(user.firstName, 16)}</p>
 					</button>
 				`
-				))).fadeIn();
+						))).fadeIn();
 
-				$(`#people-${user.uid}`).click(() => {
-					changePath(`/u/${user.username}`);
-					renderProfilePage();
-				});
+						$(`#people-${user.uid}`).click(() => {
+							changePath(`/u/${user.username}`);
+							renderProfilePage();
+						});
 
-				$('.search-people-list').prepend($($.parseHTML(
-					`
+						$('.search-people-list').prepend($($.parseHTML(
+							`
 					<div id="search-${user.uid}" class="inline-flex w-full my-2">
 						<img class="rounded-full object-cover w-10 h-10 bg-white" src="${user.userPhoto}"/>
 						<div class="p-2 w-full">
@@ -1014,33 +1061,35 @@ function getPath() {
 						</button>
 				  </div>
 				`
-				))).fadeIn();
+						))).fadeIn();
 
-				$(`#search-${user.uid}`).click(() => {
-					changePath(`/u/${user.username}`);
-					renderProfilePage();
-					scrollTop();
-				});
-			}
+						$(`#search-${user.uid}`).click(() => {
+							changePath(`/u/${user.username}`);
+							renderProfilePage();
+							scrollTop();
+						});
+					}
 
-			$(`#btn-follow-${user.uid}`).click(() => toggleFollow(user.uid, auth.currentUser.uid));
-		});
+					$(`#btn-follow-${user.uid}`).click(() => toggleFollow(user.uid, auth.currentUser.uid));
+				})
+			});
 
-		onChildChanged(ref(database, 'users'), (snapshot) => {
-			const user = snapshot.val();
-			if (user.followers && user.followers[auth.currentUser.uid] == true) {
-				$(`#btn-follow-${user.uid}`).html('Unfollow');
-			} else {
-				$(`#btn-follow-${user.uid}`).html('Follow');
-			}
+		const userSnapshot = onSnapshot(collection(db, 'users'), (snapshot) => {
+			snapshot.forEach((userDoc) => {
+				const user = userDoc.data();
+				if (user.followers && user.followers[auth.currentUser.uid] == true) {
+					$(`#btn-follow-${user.uid}`).html('Unfollow');
+				} else {
+					$(`#btn-follow-${user.uid}`).html('Follow');
+				}
+			});
 		});
 
 		const user = auth.currentUser;
 
-		get(ref(database, `/users/${user.uid}`))
+		getDoc(doc(db, 'users', `${user.uid}`))
 			.then((snapshot) => {
-				const data = snapshot.val();
-
+				const data = snapshot.data();
 				$('.navbar-avatar').attr('src', data.userPhoto);
 				if (user.displayName === null && user.photoURL === null) {
 					updateProfile(user, {
@@ -1050,7 +1099,7 @@ function getPath() {
 				}
 
 				if (user.photoURL != null && data.userPhoto !== user.photoURL) {
-					update(ref(database, `users/${user.uid}`), {
+					updateDoc(doc(db, `users`, `${user.uid}`), {
 						userPhoto: user.photoURL
 					});
 				}
@@ -1248,26 +1297,7 @@ function getPath() {
 				new TDialog('Email should be 4 chars and higher.').show();
 				return;
 			}
-			$('.beta-signup').html(loader()).attr('disabled', 'true');
-			get(query(ref(database, 'beta'), orderByChild('email'), equalTo(email)))
-				.then((snapshot) => {
-					if (snapshot.exists()) {
-						$('.beta-signup').html('Register').removeAttr('disabled');
-						new TDialog('You\'re already registered to beta.').show();
-					} else {
-						push(child(ref(database), 'beta'), {
-							email: email,
-							access: false,
-							createdAt: Date.now()
-						}).then(() => {
-							$('.beta-signup').html('Register').removeAttr('disabled');
-							new TDialog('Thanks. You\'ll received a invation link soon.').show();
-						}).catch((error) => {
-							$('.beta-signup').html('Register').removeAttr('disabled');
-							new TDialog('Beta registration isn\'t available at this time.').show();
-						});
-					}
-				});
+			new TDialog('Tambayan will be open soon.').show();
 		});
 	}
 
@@ -1303,48 +1333,46 @@ function getPath() {
 			</section>`)));
 
 		const username = getLastPathSegment();
-		get(query(ref(database, 'users', limitToFirst(1)), orderByChild('username'), equalTo(username)))
+		getDocs(query(collection(db, "users"), where("username", "==", getLastPathSegment())))
 			.then((snapshot) => {
-				if (snapshot.exists()) {
-					const data = snapshot.val();
-					snapshot.forEach((user) => {
-						$('title').html(`${data[user.key].displayName} - Tambayan`);
-						$('.profile').html($($.parseHTML(
-						 `<div class="profile-page sm:mx-32 py-1.5 mt-10">
+				snapshot.forEach((user) => {
+					const data = user.data();
+					$('title').html(`${data.displayName} - Tambayan`);
+					$('.profile').html($($.parseHTML(
+						`<div class="profile-page sm:mx-32 py-1.5 mt-10">
 							<div class="profile-cover h-32 bg-blue-900"></div>
 							<div class="relative -translate-y-12">
 								<div class="px-4 flex justify-between">
                  <div class="relative w-28 h-28 bg-gray-300 rounded-full overflow-hidden">
-                   <img src="${data[user.key].userPhoto}" alt="Profile Picture" class="w-full h-full z-40 object-cover">
-                   ${
-                   data[user.key].uid === auth.currentUser.uid ?
-                   '<div class="absolute inset-0 flex items-center justify-center">' +
-                     '<div class="bg-black bg-opacity-50 hover:bg-opacity-40 px-4 py-3 rounded-full">' +
-                       '<span class="sr-only">Edit profile picture</span>' +
-                       '<i class="fa-sharp fa-solid fa-camera text-lg text-white"></i>' +
-                     '</div>' +
-                    '</div>'
-                    : ''
-                   }
+                   <img src="${data.userPhoto}" alt="Profile Picture" class="w-full h-full z-40 object-cover">
+                   ${data.uid === auth.currentUser.uid ?
+							'<div class="absolute inset-0 flex items-center justify-center">' +
+							'<div class="bg-black bg-opacity-50 hover:bg-opacity-40 px-4 py-3 rounded-full">' +
+							'<span class="sr-only">Edit profile picture</span>' +
+							'<i class="fa-sharp fa-solid fa-camera text-lg text-white"></i>' +
+							'</div>' +
+							'</div>'
+							: ''
+						}
                   </div>
 									<div class="inline-flex items-end justify-end gap-2">
-									  <button class="profile-btn-chat-${user.key} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 rounded-full border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5"><i class="fa-regular fa-message text-lg mt-1.5"></i></button>
-									  <button class="profile-btn-follow-${user.key} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 rounded-full border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${auth.currentUser ? data[user.key].uid === auth.currentUser.uid ? 'Edit profile' : data[user.key].followers ? data[user.key].followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : 'Follow' : 'Follow'}</button>
+									  <button class="profile-btn-chat-${user.id} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 rounded-full border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5"><i class="fa-regular fa-message text-lg mt-1.5"></i></button>
+									  <button class="profile-btn-follow-${user.id} self-end hover:bg-gray-300 dark:hover:bg-gray-700 h-10 rounded-full border border-gray-300 dark:border-gray-800 dark:text-white px-4 py-1.5">${auth.currentUser ? data.uid === auth.currentUser.uid ? 'Edit profile' : data.followers ? data.followers[auth.currentUser.uid] === true ? 'Unfollow' : 'Follow' : 'Follow' : 'Follow'}</button>
 									</div>
 								</div>
-								<h4 class="flex px-4 text-2xl dark:text-white mt-2">${data[user.key].displayName} ${data[user.key].verification === 'verified' ? '<i class="mt-1.5 ms-2 text-lg fa-sharp fa-solid fa-circle-check text-blue-600"></i>' : ''}</h4>
+								<h4 class="flex px-4 text-2xl dark:text-white mt-2">${data.displayName} ${data.verification === 'verified' ? '<i class="mt-1.5 ms-2 text-lg fa-sharp fa-solid fa-circle-check text-blue-600"></i>' : ''}</h4>
 								<div class="px-4 flex items-start justify-start gap-2">
-									<p class="text-gray-600 dark:text-white"><span class="font-bold">${formatNumber(data[user.key].followerCount)}</span> followers</p>
-									<p class="text-gray-600 dark:text-white"><span class="font-bold">${formatNumber(data[user.key].followingCount)}</span> followings</p>
+									<p class="text-gray-600 dark:text-white"><span class="font-bold">${formatNumber(data.followerCount)}</span> followers</p>
+									<p class="text-gray-600 dark:text-white"><span class="font-bold">${formatNumber(data.followingCount)}</span> followings</p>
 								</div>
-								${data[user.key].biodata.bio !== null && data[user.key].biodata.bio !== 'none' ?
-								'<div class="px-4 py-1 bio">'
-								+ '<p class="text-sm text-gray-600 dark:text-white">' + data[user.key].biodata.bio + '</p>' +
-								'</div>' : ''}
-								${data[user.key].biodata.currentCity !== 'none' ?
-								'<div class="mt-2 px-4 flex items-start justify-start gap-2">'
-								+ '<span class="text-xs bg-gray-300 rounded-xl px-2 py-1.5 text-gray-600 dark:text-white dark:bg-gray-800"><i class="fa-sharp fa-solid fa-location-dot dark:text-white me-1.5"></i>' + data[user.key].biodata.currentCity + '</span>' +
-								'</div>' : ''}
+								${data.biodata.bio !== null && data.biodata.bio !== 'none' ?
+							'<div class="px-4 py-1 bio">'
+							+ '<p class="text-sm text-gray-600 dark:text-white">' + data.biodata.bio + '</p>' +
+							'</div>' : ''}
+								${data.biodata.currentCity !== 'none' ?
+							'<div class="mt-2 px-4 flex items-start justify-start gap-2">'
+							+ '<span class="text-xs bg-gray-300 rounded-xl px-2 py-1.5 text-gray-600 dark:text-white dark:bg-gray-800"><i class="fa-sharp fa-solid fa-location-dot dark:text-white me-1.5"></i>' + data.biodata.currentCity + '</span>' +
+							'</div>' : ''}
 								<hr class="mt-3 mb-3 border-gray-300 dark:border-gray-800">
 								<div class="flex justify-between">
 								  <h4 class="text-xl px-4 text-gray-600 dark:text-white">Posts</h4>
@@ -1361,27 +1389,38 @@ function getPath() {
 								</div>
 							</div>
 						</div>`
-						)));
+					)));
 
-						$(`.profile-btn-follow-${user.key}`).click(() => {
-							if (auth.currentUser) {
-								if (user.key === auth.currentUser.uid) {
-									new TDialog('This feature isn\'t available right now.').show();
-								} else {
-									toggleFollow(user.key, auth.currentUser.uid);
-								}
-							} else {
-								new TDialog(`Login to follow ${data[user.key].firstName}.`).show();
-							}
-						});
-
+					$(`.profile-btn-follow-${user.id}`).click(() => {
 						if (auth.currentUser) {
-							onChildAdded(query(ref(database, 'posts', limitToFirst(20)), orderByChild('uid'), equalTo(user.key)), (snapshot) => {
-								const post = snapshot.val();
-								if (snapshot.exists()) {
-									get(ref(database, `/users/${user.key}`))
+							if (user.id === auth.currentUser.uid) {
+								new TDialog('This feature isn\'t available right now.').show();
+							} else {
+								toggleFollow(user.id, auth.currentUser.uid);
+							}
+						} else {
+							new TDialog(`Login to follow ${data.firstName}.`).show();
+						}
+					});
+
+					const userSnapshot = onSnapshot(doc(db, 'users', `${user.uid}`), (snapshot) => {
+						const user = snapshot.data();
+						if (user.followers && user.followers[auth.currentUser.uid] == true) {
+							$(`#profile-btn-follow-${user.uid}`).html('Unfollow');
+						} else {
+							$(`#profile-btn-follow-${user.uid}`).html('Follow');
+						}
+					});
+
+
+					if (auth.currentUser) {
+						getDocs(query(collection(db, "posts"), where("uid", "==", data.uid), limit(20)))
+							.then((snapshot) => {
+								snapshot.forEach((data) => {
+									const post = data.data();
+									getDoc(doc(db, 'users', `${user.id}`))
 										.then((snapshot) => {
-											const user1 = snapshot.val();
+											const user1 = snapshot.data();
 
 											$('.user-post-list').prepend(posts(post, user1)).fadeIn();
 											$(`#btn-like-${post.postKey}`).click(() => toggleLike(auth.currentUser.uid, post.postKey));
@@ -1406,46 +1445,13 @@ function getPath() {
 										}).catch((error) => {
 											console.error(`Load error: `, error.message);
 										});
-								} else {
-									$('.loading-post').remove().fadeOut('slow');
-									$('.user-post-list').html('<p class="mt-8 dark:text-white text-center">There\'s no post yet.</p>');
-								}
+								})
 							});
-						} else {
-							$('.loading-post').remove().fadeOut('slow');
-							$('.user-post-list').html('<p class="mt-8 dark:text-white text-center">Login to see posts here.</p>');
-						}
-
-						onChildChanged(ref(database, 'posts'), (snapshot) => {
-							const post = snapshot.val();
-							const key = snapshot.key;
-							$(`#btn-like-count-${key}`).text(formatNumber(post.likeCount));
-							if (post.likes && post.likes[auth.currentUser.uid] === true) {
-								$(`#btn-like-icon-${key}`).removeClass('fa-regular');
-								$(`#btn-like-icon-${key}`).addClass('fa-solid text-blue-600 animate__bounceIn');
-							} else {
-								$(`#btn-like-icon-${key}`).removeClass('fa-solid text-blue-600 animate__bounceIn');
-								$(`#btn-like-icon-${key}`).addClass('fa-regular');
-							}
-						});
-
-						onChildRemoved(ref(database, 'posts'), (snapshot) => {
-							const key = snapshot.key;
-							$(`#${key}`).remove().fadeOut();
-						});
-					});
-
-					onChildChanged(ref(database, 'users'), (snapshot) => {
-						const user = snapshot.val();
-						if (user.followers && user.followers[auth.currentUser.uid] == true) {
-							$(`.profile-btn-follow-${user.uid}`).html('Unfollow');
-						} else {
-							$(`.profile-btn-follow-${user.uid}`).html('Follow');
-						}
-					});
-				} else {
-					$('.profile').html('<p class="mt-32 dark:text-white text-center">This profile doesn\'t exist.</p>');
-				}
+					} else {
+						$('.loading-post').remove().fadeOut('slow');
+						$('.user-post-list').html('<p class="mt-8 dark:text-white text-center">Login to see posts here.</p>');
+					}
+				});
 			});
 
 		$('.btn-back').click(() => {
@@ -1513,14 +1519,14 @@ function getPath() {
 			renderHomePage();
 		});
 
-		get(ref(database, `/posts/${getLastPathSegment()}`))
+		getDoc(doc(db, `posts`, `${getLastPathSegment()}`))
 			.then((snapshot) => {
 				if (snapshot.exists()) {
-					const post = snapshot.val();
+					const post = snapshot.data();
 					$('title').html(`${truncate2(post.postBody, 16)} - Tambayan`);
-					get(ref(database, `/users/${post.uid}`))
+					getDoc(doc(db, `users`, `${post.uid}`))
 						.then((snapshot) => {
-							const user = snapshot.val();
+							const user = snapshot.data();
 							$('.comment-post-holder').html(posts(post, user));
 							$('.comment-post').append($($.parseHTML(
 								`<div class="mt-2">
@@ -1543,8 +1549,8 @@ function getPath() {
 							$('.comment-btn').click(() => {
 								const comm = $('.input-comment').val();
 								if (comm.length > 0) {
-									const commKey = push(child(ref(database), `/posts/${post.postKey}/comments`)).key;
-									set(ref(database, `/posts/${post.postKey}/comments/${commKey}`), {
+									const commKey = generateRandomId(12);
+									setDoc(doc(db, `posts`, `${post.postKey}`, `comments/${commKey}`), {
 										key: commKey,
 										postKey: post.postKey,
 										text: $('.input-comment').val(),
@@ -1564,9 +1570,13 @@ function getPath() {
 								$('.input-comment').focus();
 							});
 
-							onChildChanged(ref(database, 'posts'), (snapshot) => {
-								const post = snapshot.val();
-								const key = snapshot.key;
+							const unsubscribe = onSnapshot(doc(db, 'posts', post.postKey), (postDoc) => {
+								if (!postDoc.exists()) {
+									console.log('Post does not exist!');
+									return;
+								}
+								const post = postDoc.data();
+								const key = postDoc.id;
 								$(`#btn-like-count-${key}`).text(formatNumber(post.likeCount));
 								if (post.likes && post.likes[auth.currentUser.uid] === true) {
 									$(`#btn-like-icon-${key}`).removeClass('fa-regular');
@@ -1577,15 +1587,17 @@ function getPath() {
 								}
 							});
 
-							$(`.comment-count-${post.postKey}`).html(post.comments ? formatNumber(Object.keys(post.comments).length) : '0');
-							onChildAdded(query(ref(database, `/posts/${post.postKey}/comments`)), (snapshot1) => {
-								if (snapshot1.exists()) {
-									const comment = snapshot1.val();
-									get(ref(database, `/users/${comment.uid}`))
-										.then((snapshot) => {
-											const user = snapshot.val();
-											$('.comment-post-list').prepend($($.parseHTML(
-												`
+							getDocs(collection(db, 'posts', `${post.postKey}`, 'comments'))
+								.then((docSnapshot) => {
+									$(`.comment-count-${post.postKey}`).html(docSnapshot.size ? formatNumber(docSnapshot.size) : '0');
+									console.log(docSnapshot.size);
+									docSnapshot.forEach((data) => {
+										const comment = data.data();
+										getDoc(doc(db, 'users', `${comment.uid}`))
+											.then((snapshot) => {
+												const user = snapshot.data();
+												$('.comment-post-list').prepend($($.parseHTML(
+													`
 								         <div class="flex items-start justify-start mb-2">
 								           <img class="comment-profile-${comment.key} w-10 h-10 border border-gray-300 dark:border-gray-800 rounded-full me-2" src="${user.userPhoto}"/>
 								           <div class="comment-body">
@@ -1596,15 +1608,16 @@ function getPath() {
 								             <p class="mt-1.5 text-xs dark:text-gray-100">${formatRelativeTime(comment.timestamp)}</p>
 								           </div>
 								         </div>`
-											)));
+												)));
 
-											$(`.comment-profile-${comment.key}`).click(() => {
-												changePath(`/u/${user.username}`);
-												renderProfilePage();
-											})
-										});
-								}
-							});
+												$(`.comment-profile-${comment.key}`).click(() => {
+													changePath(`/u/${user.username}`);
+													renderProfilePage();
+												})
+											});
+									});
+								})
+								.catch((error) => console.log(error));
 						}).catch((error) => {
 							$('.comment-post').html($($.parseHTML(
 								`
@@ -2245,46 +2258,29 @@ function getPath() {
 				return;
 			}
 			$('.btn-create-account').html(loader()).attr('disabled', 'true');
-			get(query(ref(database, 'beta'), orderByChild('email'), equalTo(email)))
-				.then((snapshot) => {
-					if (snapshot.exists()) {
-						const data = snapshot.val();
-						snapshot.forEach((item) => {
-							const beta = data[item.key];
-							if (beta.access === true) {
-								createUserWithEmailAndPassword(auth, email, password)
-									.then((authCredential) => {
-										const user = authCredential.user;
-										createUserAccount(user, 'firebase');
-									})
-									.catch((error) => {
-										const errorCode = error.code;
-										const errorMessage = error.message;
-										switch (errorCode) {
-											case 'auth/email-already-in-use':
-												new TDialog('Email address is already used.').show();
-												break;
+			createUserWithEmailAndPassword(auth, email, password)
+				.then((authCredential) => {
+					const user = authCredential.user;
+					createUserAccount(user, 'firebase');
+				})
+				.catch((error) => {
+					const errorCode = error.code;
+					const errorMessage = error.message;
+					switch (errorCode) {
+						case 'auth/email-already-in-use':
+							new TDialog('Email address is already used.').show();
+							break;
 
-											case 'auth/network-request-failed':
-												new TDialog('Network error.').show();
-												break;
+						case 'auth/network-request-failed':
+							new TDialog('Network error.').show();
+							break;
 
-											default:
-												new TDialog('An error occured. Please try again.').show();
-												break;
-										}
-										$('.btn-create-account').html(`Create account`).removeAttr('disabled');
-										console.log(error);
-									});
-							} else {
-								$('.btn-create-account').html(`Create account`).removeAttr('disabled');
-								new TDialog('Only with invite link can signup at this time.').show();
-							}
-						});
-					} else {
-						$('.btn-create-account').html(`Create account`).removeAttr('disabled');
-						new TDialog('Only with invite link can signup at this time.').show();
+						default:
+							new TDialog('An error occured. Please try again.').show();
+							break;
 					}
+					$('.btn-create-account').html(`Create account`).removeAttr('disabled');
+					console.log(error);
 				});
 		});
 
