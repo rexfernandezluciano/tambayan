@@ -34,6 +34,7 @@ import {
 	linkWithCredential,
 	signInWithPopup,
 	GoogleAuthProvider,
+	FacebookAuthProvider,
 	getAdditionalUserInfo
 } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js';
 import { getPerformance } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-performance.js";
@@ -41,11 +42,6 @@ import { getRemoteConfig, getValue } from "https://www.gstatic.com/firebasejs/10
 
 import app from './config.js';
 import TDialog from './dialog.js';
-
-// const appCheck = initializeAppCheck(app, {
-// 	provider: new ReCaptchaEnterpriseProvider('6LemV5EpAAAAAEuKX7BK_enKi_Xxn4DgHbfHh5Tl'),
-// 	isTokenAutoRefreshEnabled: true
-// });
 
 const analytics = getAnalytics(app);
 const messaging = getMessaging(app);
@@ -616,6 +612,7 @@ function getPath() {
 				 </div>
 				`
 		)));
+		
 		applyActionCode(auth, actionCode).then((resp) => {
 			$('.body-layout').html($($.parseHTML(
 				`
@@ -625,7 +622,7 @@ function getPath() {
 						  Verification completed.
 						</h4>
 					  <p class="dark:text-white mt-3">
-					    You will be automaticaly redirected to a login page.
+					    You will be automaticaly redirected to alogin page.
 					  </p>
 				 </div>
 				`
@@ -1091,14 +1088,13 @@ function getPath() {
 			.then((snapshot) => {
 				const data = snapshot.data();
 				$('.navbar-avatar').attr('src', data.userPhoto);
-				if (user.displayName === null && user.photoURL === null) {
+				if (user.displayName === null) {
 					updateProfile(user, {
-						displayName: data.displayName,
-						photoURL: data.userPhoto
+						displayName: data.displayName
 					});
 				}
 
-				if (user.photoURL != null && data.userPhoto !== user.photoURL) {
+				if (user.photoURL === null || data.userPhoto !== user.photoURL) {
 					updateDoc(doc(db, `users`, `${user.uid}`), {
 						userPhoto: user.photoURL
 					});
@@ -1108,7 +1104,7 @@ function getPath() {
 					changePath(`/u/${data.username}`);
 					renderProfilePage();
 					scrollTop();
-				})
+				});
 			});
 
 		$('.btn-signout').click(() => {
@@ -2051,27 +2047,34 @@ function getPath() {
 							<button type="submit"
 								class="btn-login w-full block bg-blue-500 hover:bg-blue-400 focus:bg-blue-400 text-white font-semibold rounded-lg px-4 py-3 mt-6">
 								Login</button>
+								
+							<button
+								class="bg-white border px-4 py-3 w-full font-semibold rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300 signup-btn">
+								Create an account
+							</button>
 						</div>
 
-						<div class="hidden">
-						<div class="mt-7 grid grid-cols-3 items-center text-gray-500">
-							<hr class="border-gray-500" />
-							<p class="text-center text-sm">
-								OR
-							</p>
-							<hr class="border-gray-500" />
+						<div class="block pb-4">
+							<div class="mt-7 grid grid-cols-3 items-center text-gray-500">
+								<hr class="border-gray-500" />
+								<p class="text-center text-sm">
+									OR
+								</p>
+								<hr class="border-gray-500" />
+							</div>
+							<button
+								id="signInWithGoogle"
+								class="bg-white border px-4 py-3 w-full font-semibold rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300">
+								<i class="fa-brands fa-google me-2"></i>
+								Login with Google
+							</button>
+							<button
+								id="signInWithFacebook"
+								class="bg-white border px-4 py-3 w-full font-semibold rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300">
+								<i class="fa-brands fa-facebook me-2"></i>
+								Login with Facebook
+							</button>
 						</div>
-						<button
-						  id="signInWithGoogle"
-							class="bg-white border px-4 py-3 w-full font-semibold rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300">
-							<i class="fa-brands fa-google me-2"></i>
-							Signin with Google
-						</button>
-						<button
-							class="bg-white border px-4 py-3 w-full font-semibold rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300 signup-btn">
-							Create an account
-						</button>
-					</div>
 					</div>
 
 					<div class="welcome px-5 hidden">
@@ -2143,10 +2146,10 @@ function getPath() {
 							Go back
 						</button>
 					</div>
-					
+
 					<div class="create-account px-5 hidden">
 						<h2 class="text-2xl font-bold text-blue-600">
-						 Create your account
+							Create your account
 						</h2>
 						<p class="text-sm mt-2 text-blue-600">
 							Enter your email, and password.
@@ -2168,13 +2171,13 @@ function getPath() {
 
 							<button type="button"
 								class="btn-create-account w-full block bg-blue-500 hover:bg-blue-400 focus:bg-blue-400 text-white font-semibold rounded-lg px-4 py-3 mt-6">
-								  Create account
-								</button>
+								Create account
+							</button>
 						</div>
 
 						<button
 							class="bg-white border px-4 py-3 w-full font-semibold rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300 signup-btn">
-							 Go back
+							Go back
 						</button>
 					</div>
 
@@ -2188,11 +2191,11 @@ function getPath() {
 				const email = $('#email').val();
 				const password = $('#password').val();
 				if (email.length < 4) {
-					new TDialog('Email should be 4 and higher.').show();
+					new TDialog('Email should be 4 chars and higher.').show();
 					return;
 				}
 				if (password.length < 4) {
-					new TDialog('Password should be 4 and higher.').show();
+					new TDialog('Password should be 4 chars and higher.').show();
 					return;
 				}
 				$('.btn-login').html(loader()).attr('disabled', 'true');
@@ -2250,11 +2253,11 @@ function getPath() {
 			const email = $('#ca-email').val();
 			const password = $('#ca-password').val();
 			if (email.length < 4) {
-				new TDialog('Email should be 4 and higher.').show();
+				new TDialog('Email should be 4 chars and higher.').show();
 				return;
 			}
 			if (password.length < 4) {
-				new TDialog('Password should be 4 and higher.').show();
+				new TDialog('Password should be 4 chars and higher.').show();
 				return;
 			}
 			$('.btn-create-account').html(loader()).attr('disabled', 'true');
@@ -2366,6 +2369,28 @@ function getPath() {
 					new TDialog(errorMessage).show();
 				});
 		});
+
+		$('#signInWithFacebook').click(() => {
+			signInWithPopup(auth, new FacebookAuthProvider())
+				.then((result) => {
+					const credential = FacebookAuthProvider.credentialFromResult(result);
+					const token = credential.accessToken;
+					const userInfo = getAdditionalUserInfo(result);
+					const user = result.user;
+
+					if (userInfo.isNewUser()) {
+						createUserAccount(user, 'custom');
+					} else {
+						redirect('/');
+					}
+				}).catch((error) => {
+					const errorCode = error.code;
+					const errorMessage = error.message;
+					const email = error.customData.email;
+					const credential = FacebookAuthProvider.credentialFromError(error);
+					new TDialog(errorMessage).show();
+				});
+		});
 	}
 
 	function renderCreatePost() {
@@ -2434,31 +2459,31 @@ function getPath() {
 		const lang = getParameterByName('lang') || 'en';
 		$('main').html($($.parseHTML(
 			`<section class="main-layout max-h-screen from-slate-50 dark:bg-gray-900">
-										<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900 sm:border-b-2 sm:dark:border-gray-800">
-											<div class="px-3 py-3 lg:px-5 lg:pl-3">
-												<div class="flex items-center justify-between">
-													<button type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
-													</button>
-													<div class="flex items-center justify-start rtl:justify-end">
-														<a href="/" class="flex md:me-24">
-                              <img src="/assets/img/barkada.png" class="w-10 h-10"/>
-														</a>
-													</div>
-													<div class="flex items-center">
-														<div class="flex items-center ms-3">
-															<div>
-																<button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" aria-expanded="false">
-																</button>
-															</div>
-														</div>
-													</div>
-												</div>
-											</div>
-										</nav>
+				<nav class="navbar top-0 z-50 w-full bg-white dark:bg-gray-900 sm:border-b-2 sm:dark:border-gray-800">
+					<div class="px-3 py-3 lg:px-5 lg:pl-3">
+						<div class="flex items-center justify-between">
+							<button type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden focus:outline-none dark:text-gray-400">
+							</button>
+							<div class="flex items-center justify-start rtl:justify-end">
+								<a href="/" class="flex md:me-24">
+									<img src="/assets/img/barkada.png" class="w-10 h-10" />
+								</a>
+							</div>
+							<div class="flex items-center">
+								<div class="flex items-center ms-3">
+									<div>
+										<button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" aria-expanded="false">
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nav>
 
-										<div class="body-layout mt-4 flex items-center justify-center text-center ">
-										</div>
-									</section>`
+				<div class="body-layout mt-4 flex items-center justify-center text-center ">
+				</div>
+			</section>`
 		)));
 		switch (mode) {
 			case 'resetPassword':
@@ -2476,17 +2501,15 @@ function getPath() {
 			default:
 				$('title').html('Invalid mode');
 				$('.body-layout').html($($.parseHTML(
-					`
-					         <div class="w-full max-h-screen p-5">
-					           <img src="/assets/img/undraw_cancel_re_pkdm.svg" class="mx-auto h-52" />
-						         <h4 class="mt-3 mb-3 dark:text-white text-xl">
-						           Error
-						         </h4>
-					           <p class="dark:text-white mt-3">
-					             Invalid mode.
-					           </p>
-				           </div>
-				          `
+					`<div class="w-full max-h-screen p-5">
+						<img src="/assets/img/undraw_cancel_re_pkdm.svg" class="mx-auto h-52" />
+						<h4 class="mt-3 mb-3 dark:text-white text-xl">
+							Error
+						</h4>
+						<p class="dark:text-white mt-3">
+							Invalid mode.
+						</p>
+					</div>`
 				)));
 		}
 	}
@@ -2669,6 +2692,7 @@ function getPath() {
 							break;
 
 						default:
+							renderPageNotFound();
 							break;
 					}
 				}

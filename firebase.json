@@ -14,14 +14,18 @@
 			"destination": "/index.html"
 		}],
 		"headers": [ {
-			"source": "**/*.@(eot|otf|ttf|ttc|woff|font.css)",
+			"source": "**/*.@(jpg|png|webp|gif|jpeg)",
 			"headers": [ {
 				"key": "Access-Control-Allow-Origin",
-				"value": "*"
+				"value": "https://itstambayan.web.app"
 			}]
-		}]
-	},
-	"database": {
-		"rules": "database.rules.json"
+		},
+			{
+				"source": "**/*.@(js|css|html|txt|json)",
+				"headers": [ {
+					"key": "Access-Control-Allow-Origin",
+					"value": "https://itstambayan.web.app"
+				}]
+			}]
 	}
 }
